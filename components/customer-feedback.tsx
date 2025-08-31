@@ -48,7 +48,7 @@ const testimonials = [
     location: "سياتل",
     locationEn: "Seattle, WA",
     rating: 4,
-    comment: "أثاث عالي الجودة بتصميم ممتاز. ميزة المعاينة ثلاثية الأبعاد تغير قواعد اللعبة لتسوق الأثاث عبر الإنترنت.",
+    comment: "أثاث عالي الجودة جدا بتصميم ممتاز. ميزة المعاينة ثلاثية الأبعاد تغير قواعد اللعبة لتسوق الأثاث عبر الإنترنت.",
     commentEn: "Great quality furniture with excellent design. The 3D preview feature is a game-changer for online furniture shopping.",
     image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
   },
