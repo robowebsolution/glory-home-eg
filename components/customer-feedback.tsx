@@ -126,21 +126,7 @@ export function CustomerFeedback() {
                   </blockquote>
 
                   {/* Customer Info */}
-                  <div className="flex items-center justify-center space-x-4 rtl:space-x-reverse">
-                    <img
-                      src={testimonials[currentIndex].image || "/placeholder.svg"}
-                      alt={language === "ar" ? testimonials[currentIndex].name : testimonials[currentIndex].nameEn}
-                      className="w-16 h-16 rounded-full object-cover"
-                    />
-                    <div className="text-left rtl:text-right rtl:font-['Tajawal']">
-                      <div className="font-semibold text-gray-900 dark:text-white">
-                        {language === "ar" ? testimonials[currentIndex].name : testimonials[currentIndex].nameEn}
-                      </div>
-                      <div className="text-gray-600 dark:text-gray-300">
-                        {language === "ar" ? testimonials[currentIndex].location : testimonials[currentIndex].locationEn}
-                      </div>
-                    </div>
-                  </div>
+                  
                 </div>
               </CardContent>
             </Card>

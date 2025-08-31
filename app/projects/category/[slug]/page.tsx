@@ -38,7 +38,7 @@ async function getData(slug: string) {
   const category = categories.find((c: any) => c.slug === slug)
   if (!category) return { category: null, projects: [] }
 
-  const projsRes = await fetch(`${base}/api/projects?category_id=${category.id}`, {
+  const projsRes = await fetch(`${base}/api/projects?category_id=${category.id}&limit=50`, {
     next: { revalidate: 600, tags: [`projects-category-${category.id}`] },
   })
   const projsJson = await projsRes.json()
