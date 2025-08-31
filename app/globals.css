@@ -1,0 +1,346 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 262.1 83.3% 57.8%;
+    --radius: 0.5rem;
+
+    /* Sidebar variables */
+    --sidebar-background: 240 10% 4%;
+    --sidebar-foreground: hsl(262deg 83.33% 57.65%);
+    --sidebar-primary: 262.1 83.3% 57.8%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 6% 18%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 240 6% 18%;
+    --sidebar-ring: 262.1 83.3% 57.8%;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 6% 12%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 262.1 83.3% 57.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Force light theme for admin dashboard */
+  .dark .admin-layout {
+    --background: 0 0% 98%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+  }
+
+
+}
+
+/* RTL Support */
+.rtl {
+  direction: rtl;
+}
+
+.rtl .space-x-reverse > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
+.rtl .divide-x-reverse > :not([hidden]) ~ :not([hidden]) {
+  --tw-divide-x-reverse: 1;
+}
+
+/* RTL specific adjustments */
+.rtl .text-left {
+  text-align: right;
+}
+
+.rtl .text-right {
+  text-align: left;
+}
+
+.rtl .float-left {
+  float: right;
+}
+
+.rtl .float-right {
+  float: left;
+}
+
+.rtl .left-0 {
+  left: auto;
+  right: 0;
+}
+
+.rtl .right-0 {
+  right: auto;
+  left: 0;
+}
+
+.rtl .ml-auto {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.rtl .mr-auto {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+/* Custom RTL utilities */
+.rtl .border-l {
+  border-left: none;
+  border-right: 1px solid;
+}
+
+.rtl .border-r {
+  border-right: none;
+  border-left: 1px solid;
+}
+
+.rtl .rounded-l {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+}
+
+.rtl .rounded-r {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 0.375rem;
+  border-bottom-left-radius: 0.375rem;
+}
+
+/* Animation adjustments for RTL */
+.rtl .animate-slide-in-left {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+.rtl .animate-slide-in-right {
+  animation: slide-in-left 0.3s ease-out;
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Scrollbar adjustments for RTL */
+.rtl ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.rtl ::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.rtl ::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.rtl ::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Form input adjustments for RTL */
+.rtl input[type="text"],
+.rtl input[type="email"],
+.rtl input[type="password"],
+.rtl input[type="tel"],
+.rtl textarea {
+  text-align: right;
+}
+
+.rtl input[type="text"]:focus,
+.rtl input[type="email"]:focus,
+.rtl input[type="password"]:focus,
+.rtl input[type="tel"]:focus,
+.rtl textarea:focus {
+  text-align: right;
+}
+
+/* Placeholder text alignment for RTL */
+.rtl input::placeholder,
+.rtl textarea::placeholder {
+  text-align: right;
+}
+
+/* Dropdown and select adjustments */
+.rtl select {
+  background-position: left 0.5rem center;
+  padding-left: 2.5rem;
+  padding-right: 0.75rem;
+}
+
+/* Button icon adjustments */
+.rtl .btn-icon-left {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+.rtl .btn-icon-right {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+/* Navigation adjustments */
+.rtl .nav-item {
+  margin-left: 1rem;
+  margin-right: 0;
+}
+
+.rtl .nav-item:first-child {
+  margin-left: 0;
+}
+
+/* Card and content adjustments */
+.rtl .card-header {
+  text-align: right;
+}
+
+.rtl .card-content {
+  text-align: right;
+}
+
+/* List adjustments */
+.rtl ul,
+.rtl ol {
+  padding-left: 0;
+  padding-right: 1.5rem;
+}
+
+.rtl li {
+  text-align: right;
+}
+
+/* Table adjustments */
+.rtl table {
+  direction: rtl;
+}
+
+.rtl th,
+.rtl td {
+  text-align: right;
+}
+
+/* Modal and dialog adjustments */
+.rtl .modal-header {
+  text-align: right;
+}
+
+.rtl .modal-body {
+  text-align: right;
+}
+
+.rtl .modal-footer {
+  justify-content: flex-start;
+}
+
+/* Tooltip adjustments */
+.rtl .tooltip {
+  direction: rtl;
+}
+
+/* Progress bar adjustments */
+.rtl .progress-bar {
+  direction: ltr;
+}
+
+/* Breadcrumb adjustments */
+.rtl .breadcrumb {
+  direction: rtl;
+}
+
+.rtl .breadcrumb-item::before {
+  content: "\\";
+  transform: scaleX(-1);
+}
+
+/* Responsive adjustments for RTL */
+@media (max-width: 768px) {
+  .rtl .mobile-menu {
+    right: auto;
+    left: 0;
+  }
+
+  .rtl .mobile-nav-item {
+    text-align: right;
+  }
+}
+
+/* Print styles for RTL */
+@media print {
+  .rtl {
+    direction: rtl;
+  }
+
+  .rtl * {
+    text-align: right !important;
+  }
+}
