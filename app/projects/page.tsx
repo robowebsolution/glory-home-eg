@@ -52,7 +52,7 @@ async function getData() {
     fetch(`${base}/api/project-categories`, {
       next: { revalidate: 600, tags: ["project-categories"] },
     }),
-    fetch(`${base}/api/projects?limit=50`, {
+    fetch(`${base}/api/projects?limit=60`, {
       next: { revalidate: 600, tags: ["projects"] },
     }),
   ])
