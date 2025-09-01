@@ -14,6 +14,7 @@ const schema = z.object({
   id: z.coerce.number().optional(),
   name_en: z.string().min(1, 'English name is required.'),
   name_ar: z.string().min(1, 'Arabic name is required.'),
+  cover: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
 });
 
 export type ProjectCategoryFormData = z.infer<typeof schema>;
@@ -31,14 +32,15 @@ export function ProjectCategoryForm({ category, onSubmit, onClose, isPending }: 
     defaultValues: {
       name_en: '',
       name_ar: '',
+      cover: '',
     }
   });
 
   useEffect(() => {
     if (category) {
-      reset({ id: Number(category.id), name_en: category.name_en || '', name_ar: category.name_ar || '' });
+      reset({ id: Number(category.id), name_en: category.name_en || '', name_ar: category.name_ar || '', cover: category.cover || '' });
     } else {
-      reset({ name_en: '', name_ar: '' });
+      reset({ name_en: '', name_ar: '', cover: '' });
     }
   }, [category, reset]);
 
@@ -58,6 +60,12 @@ export function ProjectCategoryForm({ category, onSubmit, onClose, isPending }: 
           <Input id="name_ar" {...register('name_ar')} />
           {errors.name_ar && <p className="text-red-500 text-xs mt-1">{errors.name_ar.message}</p>}
         </div>
+      </div>
+      <div>
+        <Label htmlFor="cover">Cover Image URL</Label>
+        <Input id="cover" placeholder="https://..." {...register('cover')} />
+        {errors.cover && <p className="text-red-500 text-xs mt-1">{errors.cover.message as string}</p>}
+        <p className="text-xs text-muted-foreground mt-1">Recommended: 1200×600, hosted image URL (e.g., Supabase Storage or CDN).</p>
       </div>
     </form>
   );

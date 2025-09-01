@@ -96,6 +96,32 @@ export interface ProjectCategory {
   id: string | number;
   name_en: string;
   name_ar: string;
+  cover?: string | null;
+}
+
+export interface Customer {
+  id?: string | number;
+  image_url: string;
+  created_at?: string | null;
+}
+
+// Admin Reviews type (for Supabase `reviews` table)
+export interface Review {
+  id?: string; // uuid
+  comment_ar: string;
+  comment_en: string;
+  created_at?: string | null;
+}
+
+// Home Videos type (for Supabase `videos` table)
+export interface Video {
+  id?: string | number;
+  title_ar?: string | null;
+  title_en?: string | null;
+  src: string; // video URL
+  thumbnail?: string | null;
+  duration?: string | null;
+  created_at?: string | null;
 }
 
 export interface ProjectItem {

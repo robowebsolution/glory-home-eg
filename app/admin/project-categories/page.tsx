@@ -8,7 +8,7 @@ export default async function AdminProjectCategoriesPage() {
 
   const { data, error } = await supabase
     .from('project_categories')
-    .select('id, name_en, name_ar')
+    .select('id, name_en, name_ar, cover')
     .order('id', { ascending: true });
 
   if (error) {

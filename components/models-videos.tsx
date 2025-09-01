@@ -1,47 +1,73 @@
 "use client"
-
 import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
 import { Play, Volume2, X } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useLanguage } from "@/lib/language-context"
 import Image from "next/image"
-
-const videos = [
-  {
-    id: 1,
-    title: "إعداد غرفة المعيشة العصرية",
-    titleEn: "Modern Living Room Setup",
-    src: "/models-video-1.mp4",
-    thumbnail:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    duration: "2:45",
-  },
-  {
-    id: 2,
-    title: "تحويل غرفة النوم",
-    titleEn: "Bedroom Transformation",
-    src: "/models-video-2.mp4",
-    thumbnail:
-      "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    duration: "3:20",
-  },
-  {
-    id: 3,
-    title: "عملية تصميم المطبخ",
-    titleEn: "Kitchen Design Process",
-    src: "/models-video-3.mp4",
-    thumbnail:
-      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    duration: "4:15",
-  },
-]
+import { fetchVideos } from "@/lib/api"
+import type { Video } from "@/lib/types"
 
 export function ModelsVideos() {
-  const { language, isRTL } = useLanguage() // استخدام سياق اللغة بدلاً من متغير state المحلي
-
-  // إزالة دالة toggleLanguage لأننا نستخدم الآن سياق اللغة العام
+  const { language } = useLanguage()
+  const [videos, setVideos] = useState<Video[]>([])
+  const [loading, setLoading] = useState(true)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
+  const [showAll, setShowAll] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const data = await fetchVideos()
+        if (mounted) setVideos(data)
+      } catch (e) {
+        console.error("Failed to load videos:", e)
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    })()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const displayedVideos = showAll ? videos : videos.slice(0, 3)
+
+  // Convert YouTube URLs (watch, youtu.be, shorts, embed) or an <iframe ...> snippet to an embeddable URL
+  const toYouTubeEmbed = (urlStr: string): string | null => {
+    try {
+      // If user pasted full <iframe ...> code, extract src
+      const trimmed = urlStr.trim()
+      if (trimmed.startsWith('<')) {
+        const match = trimmed.match(/src=["']([^"']+)["']/i)
+        if (match?.[1]) {
+          urlStr = match[1]
+        }
+      }
+
+      const url = new URL(urlStr)
+      let id = ""
+      const host = url.hostname
+      if (host.includes("youtu.be")) {
+        id = url.pathname.replace(/^\//, "")
+      } else if (host.includes("youtube.com")) {
+        if (url.pathname.startsWith("/watch")) {
+          id = url.searchParams.get("v") || ""
+        } else if (url.pathname.startsWith("/embed/")) {
+          id = url.pathname.split("/embed/")[1] || ""
+        } else if (url.pathname.startsWith("/shorts/")) {
+          id = url.pathname.split("/shorts/")[1] || ""
+        }
+      }
+      if (!id) return null
+      return `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`
+    } catch {
+      return null
+    }
+  }
+
+  const currentVideo = activeIndex !== null ? videos[activeIndex] : null
+  const youtubeEmbed = currentVideo?.src ? toYouTubeEmbed(String(currentVideo.src)) : null
 
   return (
     <section className="py-20 bg-white dark:bg-gray-900">
@@ -72,8 +98,19 @@ export function ModelsVideos() {
           
         </motion.div>
 
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-64 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />
+            ))}
+          </div>
+        ) : videos.length === 0 ? (
+          <div className="text-center text-gray-500 dark:text-gray-400 rtl:font-['Tajawal']">
+            {language === "ar" ? "لا توجد مقاطع فيديو حتى الآن" : "No videos available yet"}
+          </div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {videos.map((video, index) => (
+          {displayedVideos.map((video, index) => (
             <motion.div
               key={video.id}
               initial={{ opacity: 0, y: 50 }}
@@ -85,8 +122,8 @@ export function ModelsVideos() {
             >
               <div className="relative overflow-hidden rounded-lg shadow-lg">
                 <Image
-                  src={video.thumbnail || "/placeholder.svg"}
-                  alt={language === "ar" ? video.title : video.titleEn}
+                  src={(video.thumbnail as string) || "/placeholder.svg"}
+                  alt={language === "ar" ? (video.title_ar || "") : (video.title_en || "")}
                   width={800}
                   height={256}
                   className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-500"
@@ -98,7 +135,7 @@ export function ModelsVideos() {
                 {/* Play Button */}
                 <motion.div whileHover={{ scale: 1.1 }} className="absolute inset-0 flex items-center justify-center">
                   <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:bg-white transition-colors duration-300">
-                    <Play className="h-6 w-6 text-gray-900 ml-1" />
+                  <Play className="h-6 w-6 text-gray-900 ml-1" />
                   </div>
                 </motion.div>
 
@@ -115,12 +152,13 @@ export function ModelsVideos() {
 
               <div className="mt-4">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors rtl:font-['Tajawal']">
-                  {language === "ar" ? video.title : video.titleEn}
+                  {language === "ar" ? (video.title_ar || "") : (video.title_en || "")}
                 </h3>
               </div>
             </motion.div>
           ))}
         </div>
+        )}
 
         {/* Lightbox Modal */}
         {activeIndex !== null && (
@@ -141,18 +179,28 @@ export function ModelsVideos() {
                 <X className="w-7 h-7" />
               </button>
               <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
-                <video
-                  key={videos[activeIndex].src}
-                  src={videos[activeIndex].src}
-                  controls
-                  autoPlay
-                  playsInline
-                  className="w-full h-full object-contain"
-                />
+                {youtubeEmbed ? (
+                  <iframe
+                    key={youtubeEmbed}
+                    src={youtubeEmbed}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="w-full h-full"
+                  />
+                ) : (
+                  <video
+                    key={(videos[activeIndex]?.src as string) || "video"}
+                    src={(videos[activeIndex]?.src as string) || ""}
+                    controls
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-contain"
+                  />
+                )}
               </div>
               <div className="mt-3 text-center">
                 <h4 className="text-white text-lg rtl:font-['Tajawal']">
-                  {language === 'ar' ? videos[activeIndex].title : videos[activeIndex].titleEn}
+                  {language === 'ar' ? (videos[activeIndex]?.title_ar || "") : (videos[activeIndex]?.title_en || "")}
                 </h4>
               </div>
             </motion.div>
@@ -166,7 +214,15 @@ export function ModelsVideos() {
           viewport={{ once: true }}
           className="text-center mt-12"
         >
-         
+          {!showAll && videos.length > 3 && (
+            <button
+              type="button"
+              onClick={() => setShowAll(true)}
+              className="inline-flex items-center px-5 py-2.5 rounded-md bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 transition-colors"
+            >
+              {language === 'ar' ? 'عرض المزيد' : 'Show more'}
+            </button>
+          )}
         </motion.div>
       </div>
     </section>

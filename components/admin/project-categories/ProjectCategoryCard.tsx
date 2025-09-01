@@ -15,8 +15,18 @@ export function ProjectCategoryCard({ category, onEdit, onDelete }: ProjectCateg
   return (
     <Card className="flex flex-col overflow-hidden transition-shadow hover:shadow-lg">
       <CardHeader className="p-0">
-        <div className="w-full h-40 bg-muted/40 flex items-center justify-center relative">
-          <FolderOpen className="h-10 w-10 text-muted-foreground" />
+        <div className="w-full h-40 bg-muted/40 flex items-center justify-center relative overflow-hidden">
+          {category.cover ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={category.cover}
+              alt={category.name_en}
+              className="absolute inset-0 w-full h-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <FolderOpen className="h-10 w-10 text-muted-foreground" />
+          )}
           <div className="absolute top-2 right-2 flex gap-2">
             <Button
               variant="outline"

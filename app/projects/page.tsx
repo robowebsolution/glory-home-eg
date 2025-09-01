@@ -4,7 +4,7 @@ import { Footer } from "@/components/footer"
 import ProjectsClient from "@/components/projects/ProjectsClient"
 import { headers } from "next/headers"
 
-type Category = { id: number; name_en: string; name_ar: string; slug: string }
+type Category = { id: number; name_en: string; name_ar: string; slug: string; cover?: string | null }
 
 export const metadata: Metadata = {
   title: "Projects | Glory Home",

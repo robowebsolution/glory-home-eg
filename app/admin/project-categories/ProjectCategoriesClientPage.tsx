@@ -59,7 +59,7 @@ export function ProjectCategoriesClientPage({ categories }: ProjectCategoriesCli
     }
   };
 
-  const handleFormSubmit = (data: { id?: number; name_en: string; name_ar: string }) => {
+  const handleFormSubmit = (data: { id?: number; name_en: string; name_ar: string; cover?: string }) => {
     setIsFormOpen(false);
     startTransition(async () => {
       const result = await saveProjectCategory(data, selectedCategory?.id || null);

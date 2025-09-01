@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import type { Category, Product } from "@/lib/supabase"
-import { fetchCategories, fetchProducts } from "@/lib/api"
+import type { Category } from "@/lib/supabase"
+import { fetchCategories, fetchProductIdsByCategory } from "@/lib/api"
 import { isSupabaseConfigured } from "@/lib/supabase-client"
-import { motion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/lib/language-context"
@@ -31,6 +31,7 @@ export function Categories() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { t, language, isRTL } = useLanguage()
+  const prefersReducedMotion = useReducedMotion()
 
   const categoryIcons = {
     bedrooms: Bed,
@@ -70,20 +71,23 @@ export function Categories() {
           return;
         }
 
-        const [categoriesData, productsData] = await Promise.all([
+        const [categoriesData, productIdPairs] = await Promise.all([
           fetchCategories(),
-          fetchProducts(),
+          fetchProductIdsByCategory(),
         ]);
 
         let finalCategories: Category[] = [];
 
         if (Array.isArray(categoriesData) && categoriesData.length > 0) {
-          finalCategories = categoriesData.map(category => {
-            const count = productsData.filter(
-              (product: Product) => product.category_id === category.id
-            ).length;
-            return { ...category, product_count: count };
-          });
+          const countsByCategory = (productIdPairs || []).reduce((acc: Record<string, number>, p: { id: string; category_id: string }) => {
+            acc[p.category_id] = (acc[p.category_id] || 0) + 1
+            return acc
+          }, {} as Record<string, number>)
+
+          finalCategories = categoriesData.map(category => ({
+            ...category,
+            product_count: countsByCategory[category.id] || 0,
+          }))
         } else {
           finalCategories = defaultCategories;
           setError("No categories found in database - showing defaults");
@@ -134,10 +138,10 @@ export function Categories() {
     <section className="py-20 bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
+          initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+          whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          viewport={{ once: true, amount: 0.2 }}
           className={`text-center mb-16 ${isRTL ? "rtl" : ""}`}
         >
           <h2 className="text-4xl md:text-5xl font-light text-gray-900 dark:text-white mb-4">
@@ -161,10 +165,10 @@ export function Categories() {
             return (
               <motion.div
                 key={category.id}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.05 }}
-                viewport={{ once: true }}
+                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                viewport={{ once: true, amount: 0.15 }}
                 className="h-full"
               >
                 <Link href={`/categories/${category.slug}`} className="block h-full">
@@ -178,6 +182,7 @@ export function Categories() {
                           alt={language === "ar" && category.name_ar ? category.name_ar : category.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out"
                           loading="lazy"
+                          decoding="async"
                         />
                       ) : (
                         // في حال عدم وجود صورة، نعرض أيقونة

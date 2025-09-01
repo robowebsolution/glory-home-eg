@@ -23,12 +23,37 @@ const ParallaxSection = dynamic(() => import("@/components/parallax-section").th
 const NewBedrooms = dynamic(() => import("@/components/new-bedrooms").then(mod => mod.NewBedrooms));
 const WhoWeAre = dynamic(() => import("@/components/who-we-are").then(mod => mod.WhoWeAre));
 const AboutCeo = dynamic(() => import("@/components/AboutCeo").then(mod => mod.AboutCeo));
-const Categories = dynamic(() => import("@/components/categories").then(mod => mod.Categories));
+const Categories = dynamic(() => import("@/components/categories").then(mod => mod.Categories), {
+  loading: () => (
+    <section className="py-20 bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-light text-gray-900 dark:text-white mb-4">
+            Categories <span className="font-bold">Loading</span>
+          </h2>
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Loading...</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-gray-200 dark:bg-gray-700 h-48 rounded-t-lg"></div>
+              <div className="p-6 bg-white dark:bg-gray-800 rounded-b-lg">
+                <div className="bg-gray-200 dark:bg-gray-700 h-6 w-3/4 rounded mb-4"></div>
+                <div className="bg-gray-200 dark:bg-gray-700 h-4 w-1/2 rounded"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+});
 const LatestProjects = dynamic(() => import("@/components/latest-projects").then(mod => mod.LatestProjects));
 const Warranty = dynamic(() => import("@/components/warranty").then(mod => mod.Warranty));
 const ModelsVideos = dynamic(() => import("@/components/models-videos").then(mod => mod.ModelsVideos));
 const CustomerFeedback = dynamic(() => import("@/components/customer-feedback").then(mod => mod.CustomerFeedback));
 const Footer = dynamic(() => import("@/components/footer").then(mod => mod.Footer));
+const OurCustomers = dynamic(() => import("@/components/our-customers").then(mod => mod.OurCustomers));
 
 export default function HomePage() {
   return (
@@ -44,6 +69,7 @@ export default function HomePage() {
         <WhoWeAre />
         <AboutCeo />
         <Categories />
+        <OurCustomers />
         <Warranty />
         <ModelsVideos />
         <CustomerFeedback />

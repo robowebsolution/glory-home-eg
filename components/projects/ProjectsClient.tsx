@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import ProjectGalleryModal from "@/components/projects/ProjectGalleryModal"
 
-export type Category = { id: number; name_en: string; name_ar: string; slug: string }
+export type Category = { id: number; name_en: string; name_ar: string; slug: string; cover?: string | null }
 export type Project = {
   id: number
   name_en: string
@@ -64,14 +64,7 @@ export default function ProjectsClient({ categories, projects }: { categories: C
           {/* Image-based premium category cards */}
           <div className={`grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-5 ${isRTL ? "rtl" : ""}`}>
             {categories.map((c, idx) => {
-              const key = (c.slug || c.name_en || "").toLowerCase()
-              const categoryImages: Record<string, string> = {
-                schools: "https://images.unsplash.com/photo-1710845423251-28c954a4ca8d?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-                cafe: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=60",
-                compound: "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=60",
-                beach: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=60",
-              }
-              const img = categoryImages[key] || "/2-7fb9c07a.webp"
+              const img = c.cover || "/2-7fb9c07a.webp"
               return (
                 <motion.div
                   key={c.id}

@@ -9,20 +9,17 @@ export async function GET() {
   }
   try {
     const supabase = await createServerSupabase()
-    // Fetch all categories and filter to the required 4 names (case-insensitive)
+    // Fetch all project categories
     const { data, error } = await supabase
       .from("project_categories")
-      .select("id, name_en, name_ar")
+      .select("id, name_en, name_ar, cover")
       .order("id")
 
     if (error) {
       return NextResponse.json({ ok: false, error: error.message, categories: [] }, { status: 500, headers: resHeaders })
     }
 
-    const wanted = ["schools", "cafe", "compound", "beach"]
-    const categories = (data || []).filter(c => wanted.includes((c.name_en || "").toLowerCase()))
-
-    return NextResponse.json({ ok: true, categories }, { headers: resHeaders })
+    return NextResponse.json({ ok: true, categories: data || [] }, { headers: resHeaders })
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: e?.message || "unknown error", categories: [] }, { status: 500, headers: resHeaders })
   }

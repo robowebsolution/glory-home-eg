@@ -2,12 +2,13 @@
 
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase-server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 const projectCategorySchema = z.object({
   id: z.coerce.number().optional(),
   name_en: z.string().min(1, 'English name is required.'),
   name_ar: z.string().min(1, 'Arabic name is required.'),
+  cover: z.string().optional(),
 });
 
 export async function saveProjectCategory(arg1: any, arg2?: any) {
@@ -40,17 +41,21 @@ export async function saveProjectCategory(arg1: any, arg2?: any) {
     };
   }
 
-  const { id, ...categoryData } = validatedFields.data as { id?: number; name_en: string; name_ar: string };
+  const { id, ...categoryData } = validatedFields.data as { id?: number; name_en: string; name_ar: string; cover?: string };
+  const payload = {
+    ...categoryData,
+    cover: categoryData.cover && categoryData.cover.length > 0 ? categoryData.cover : null,
+  } as { name_en: string; name_ar: string; cover?: string | null };
 
   try {
     let error;
     if (id) {
       // Update
-      const { error: updateError } = await supabase.from('project_categories').update(categoryData).eq('id', id);
+      const { error: updateError } = await supabase.from('project_categories').update(payload).eq('id', id);
       error = updateError;
     } else {
       // Insert
-      const { error: insertError } = await supabase.from('project_categories').insert(categoryData);
+      const { error: insertError } = await supabase.from('project_categories').insert(payload);
       error = insertError;
     }
 
@@ -60,6 +65,8 @@ export async function saveProjectCategory(arg1: any, arg2?: any) {
 
     revalidatePath('/admin/project-categories');
     revalidatePath('/projects');
+    // Invalidate tag-based caches used by fetch(..., { next: { tags: ["project-categories"] } })
+    revalidateTag('project-categories');
     return { success: true, message: `Project category ${id ? 'updated' : 'created'} successfully!` };
 
   } catch (e: any) {
@@ -80,6 +87,8 @@ export async function deleteProjectCategory(categoryId: string | number) {
 
     revalidatePath('/admin/project-categories');
     revalidatePath('/projects');
+    // Invalidate tag-based caches so Projects page and category pages see the removal immediately
+    revalidateTag('project-categories');
     return { success: true, message: 'Project category deleted successfully!' };
   } catch (e: any) {
     return { success: false, message: `Database Error: ${e.message}` };

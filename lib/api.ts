@@ -1,5 +1,6 @@
 // Client-side API functions with proper error handling
 import { supabase, isSupabaseConfigured, supabaseConfig } from "@/lib/supabase-client"
+import type { Video } from "@/lib/types"
 
 // تعديل دالة جلب الفئات لدعم التخزين المؤقت
 export async function fetchCategories() {
@@ -32,6 +33,62 @@ export async function fetchCategories() {
   } catch (error) {
     console.error("Error fetching categories:", error)
     console.error("Supabase config:", supabaseConfig)
+    return []
+  }
+}
+
+// Videos fetching for ModelsVideos section
+export async function fetchVideos(limit?: number): Promise<Video[]> {
+  try {
+    if (!isSupabaseConfigured() || !supabase) {
+      console.error("Supabase not configured:", supabaseConfig)
+      return []
+    }
+
+    let query = supabase
+      .from("videos")
+      .select("id, title_ar, title_en, src, thumbnail, duration, created_at")
+      .order("created_at", { ascending: false })
+
+    if (limit && typeof limit === "number") {
+      query = query.limit(limit)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error("Supabase error fetching videos:", error)
+      return []
+    }
+
+    return (data || []) as Video[]
+  } catch (error) {
+    console.error("Error fetching videos:", error)
+    return []
+  }
+}
+
+// خريطة معرّفات المنتجات إلى الفئات فقط (للاستخدام في عدّ العناصر بدون حمل زائد)
+export async function fetchProductIdsByCategory(): Promise<Array<{ id: string; category_id: string }>> {
+  try {
+    if (!isSupabaseConfigured() || !supabase) {
+      console.error("Supabase not configured:", supabaseConfig)
+      return []
+    }
+
+    const { data, error } = await supabase
+      .from("products")
+      .select("id, category_id")
+      .eq("in_stock", true)
+
+    if (error) {
+      console.error("Supabase error fetching product ids by category:", error)
+      return []
+    }
+
+    return (data || []) as Array<{ id: string; category_id: string }>
+  } catch (error) {
+    console.error("Error fetching product ids by category:", error)
     return []
   }
 }
@@ -306,5 +363,84 @@ export async function fetchCategory(slug: string) {
     console.error("Error fetching category:", error)
     console.error("Supabase config:", supabaseConfig)
     return null
+  }
+}
+
+// جلب صور العملاء لقسم الكاروسيل في صفحة "About Us"
+export async function fetchCustomerImages(limit?: number, offset?: number): Promise<string[]> {
+  try {
+    if (!isSupabaseConfigured() || !supabase) {
+      console.error("Supabase not configured:", supabaseConfig)
+      return []
+    }
+
+    let query = supabase
+      .from("customers")
+      .select("image_url")
+      .order("created_at", { ascending: false })
+
+    if (typeof offset === "number" && typeof limit === "number") {
+      // Paginated fetch using range [from, to]
+      const from = Math.max(0, offset)
+      const to = from + Math.max(1, limit) - 1
+      query = query.range(from, to)
+    } else if (limit && typeof limit === "number") {
+      // Backward compatible: just limit without offset
+      query = query.limit(limit)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error("Supabase error fetching customer images:", error)
+      return []
+    }
+
+    const images = (data || [])
+      .map((row: any) => row?.image_url)
+      .filter((url: any) => typeof url === "string" && url.length > 0)
+
+    return images
+  } catch (error) {
+    console.error("Error fetching customer images:", error)
+    return []
+  }
+}
+
+// جلب مراجعات العملاء (Reviews) لسيكشن What Our Customers Say
+export type ApiReview = {
+  id?: string
+  comment_ar: string
+  comment_en: string
+  created_at?: string
+}
+
+export async function fetchReviews(limit?: number): Promise<ApiReview[]> {
+  try {
+    if (!isSupabaseConfigured() || !supabase) {
+      console.error("Supabase not configured:", supabaseConfig)
+      return []
+    }
+
+    let query = supabase
+      .from("reviews")
+      .select("id, comment_ar, comment_en, created_at")
+      .order("created_at", { ascending: false })
+
+    if (limit && typeof limit === "number") {
+      query = query.limit(limit)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error("Supabase error fetching reviews:", error)
+      return []
+    }
+
+    return (data || []) as ApiReview[]
+  } catch (error) {
+    console.error("Error fetching reviews:", error)
+    return []
   }
 }
