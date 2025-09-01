@@ -6,7 +6,53 @@ import { Star, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useEffect, useMemo, useState } from "react"
 import { useLanguage } from "@/lib/language-context"
-import { fetchReviews, type ApiReview } from "@/lib/api"
+
+const testimonials = [
+  {
+    id: 1,
+    name: "سارة جونسون",
+    nameEn: "Sarah Johnson",
+    location: "نيويورك",
+    locationEn: "New York, NY",
+    rating: 5,
+    comment: "أثاث مذهل! تجاوزت الجودة توقعاتي وساعدني التصور ثلاثي الأبعاد في اختيار الخيار المثالي لغرفة المعيشة الخاصة بي.",
+    commentEn: "Absolutely stunning furniture! The quality exceeded my expectations and the 3D visualization helped me make the perfect choice for my living room.",
+    image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
+  },
+  {
+    id: 2,
+    name: "مايكل تشين",
+    nameEn: "Michael Chen",
+    location: "سان فرانسيسكو",
+    locationEn: "San Francisco, CA",
+    rating: 5,
+    comment: "كانت خدمة التوصيل استثنائية، والأثاث يبدو أفضل حتى في الواقع. الحرفية ممتازة.",
+    commentEn: "The delivery service was exceptional, and the furniture looks even better in person. The craftsmanship is outstanding.",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
+  },
+  {
+    id: 3,
+    name: "إيميلي رودريغيز",
+    nameEn: "Emily Rodriguez",
+    location: "أوستن",
+    locationEn: "Austin, TX",
+    rating: 5,
+    comment: "أحب مدى حداثة وأناقة كل شيء. كان فريق خدمة العملاء مفيدًا للغاية طوال العملية بأكملها.",
+    commentEn: "I love how modern and elegant everything looks. The customer service team was incredibly helpful throughout the entire process.",
+    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
+  },
+  {
+    id: 4,
+    name: "ديفيد طومسون",
+    nameEn: "David Thompson",
+    location: "سياتل",
+    locationEn: "Seattle, WA",
+    rating: 4,
+    comment: "أثاث عالي الجودة بتصميم ممتاز. ميزة المعاينة ثلاثية الأبعاد تغير قواعد اللعبة لتسوق الأثاث عبر الإنترنت.",
+    commentEn: "Great quality furniture with excellent design. The 3D preview feature is a game-changer for online furniture shopping.",
+    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
+  },
+]
 
 export function CustomerFeedback() {
   const [currentIndex, setCurrentIndex] = useState(0)
