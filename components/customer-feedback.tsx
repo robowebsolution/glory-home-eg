@@ -6,6 +6,7 @@ import { Star, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useEffect, useMemo, useState } from "react"
 import { useLanguage } from "@/lib/language-context"
+import { fetchReviews, type ApiReview } from "@/lib/api"
 
 const testimonials = [
   {
