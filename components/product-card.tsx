@@ -1,11 +1,11 @@
 "use client"
-
-import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Heart, ShoppingCart, Eye, Star } from "lucide-react"
+import { Heart, ShoppingCart, Eye } from "lucide-react"
 import type { Product } from "@/lib/supabase"
 import Link from "next/link"
+import { motion } from "framer-motion"
+import ImageWithSkeleton from "@/components/ui/image-with-skeleton"
 
 interface ProductCardProps {
   product: Product
@@ -23,12 +23,12 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
           <CardContent className="p-0">
             <div className="flex flex-col md:flex-row">
               <div className="md:w-1/3 relative overflow-hidden">
-                <motion.img
+                <ImageWithSkeleton
                   src={productImage}
                   alt={product.name}
-                  className="w-full h-64 md:h-48 object-cover"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.6 }}
+                  className="w-full h-64 md:h-48 object-cover transition-transform duration-500 group-hover:scale-105"
+                  wrapperClassName="w-full h-64 md:h-48"
+                  loading="lazy"
                 />
                 {product.featured && (
                   <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
@@ -99,12 +99,12 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
       <Card className="group cursor-pointer overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm transition-all duration-300 hover:shadow-lg dark:border-gray-800/80 dark:bg-gray-900/50 h-full flex flex-col">
         <CardContent className="p-0 flex flex-col flex-grow">
           <div className="relative overflow-hidden aspect-square w-full">
-            <motion.img
+            <ImageWithSkeleton
               src={productImage}
               alt={product.name}
-              className="w-full h-full object-cover"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.6 }}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              wrapperClassName="w-full h-full"
+              loading="lazy"
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
 
