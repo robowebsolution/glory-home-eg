@@ -104,17 +104,40 @@ export function ModelsVideos() {
     return /^https?:\/\//i.test(s) || s.startsWith('/')
   }
 
-  const getThumbnailSrc = (video: Video): string => {
-    // 1) If a valid absolute URL or app path was provided, use it
-    if (isUrlOrAbsolutePath(video.thumbnail)) return String(video.thumbnail)
+  // Normalize ytimg variant (vi_webp/mq*.webp) to a stable JPG
+  const normalizeYouTubeVariantThumb = (t: string): string | null => {
+    // vi_webp/<id>/...
+    const m = t.match(/ytimg\.com\/vi_webp\/([^\/]+)/i)
+    if (m?.[1]) return `https://i.ytimg.com/vi/${m[1]}/hqdefault.jpg`
+    // vi/<id>/...
+    const m2 = t.match(/ytimg\.com\/vi\/([^\/]+)/i)
+    if (m2?.[1]) return `https://i.ytimg.com/vi/${m2[1]}/hqdefault.jpg`
+    return null
+  }
 
-    // 2) Try to derive from YouTube link if src is YouTube
+  const getThumbnailSrc = (video: Video): string => {
+    // 1) If the video source is YouTube, always prefer a stable derived thumbnail
     if (video.src) {
       const yt = toYouTubeThumb(String(video.src))
       if (yt) return yt
     }
 
-    // 3) Fallback
+    // 2) If a thumbnail is provided and is a URL or absolute path
+    if (isUrlOrAbsolutePath(video.thumbnail)) {
+      const t = String(video.thumbnail)
+      // If the provided thumbnail is a volatile YouTube variant (vi_webp/mq*.webp), normalize to a stable one
+      const isYtVariant = /https?:\/\/(?:i\d\.)?ytimg\.com\/vi_webp\//i.test(t)
+      if (isYtVariant && video.src) {
+        const yt = toYouTubeThumb(String(video.src))
+        if (yt) return yt
+      }
+      // If src isn't YouTube or derivation failed, still try to normalize directly from the thumbnail URL
+      const normalized = normalizeYouTubeVariantThumb(t)
+      if (normalized) return normalized
+      return t
+    }
+
+    // 3) Fallback to local placeholder
     return "/placeholder.svg"
   }
 
