@@ -66,6 +66,58 @@ export function ModelsVideos() {
     }
   }
 
+  // Derive a YouTube thumbnail (hqdefault) from a YouTube URL or <iframe>
+  const toYouTubeThumb = (urlStr: string): string | null => {
+    try {
+      const trimmed = urlStr.trim()
+      // Extract src if user pasted an <iframe>
+      if (trimmed.startsWith('<')) {
+        const match = trimmed.match(/src=["']([^"']+)["']/i)
+        if (match?.[1]) {
+          urlStr = match[1]
+        }
+      }
+
+      const url = new URL(urlStr)
+      let id = ""
+      const host = url.hostname
+      if (host.includes("youtu.be")) {
+        id = url.pathname.replace(/^\//, "")
+      } else if (host.includes("youtube.com")) {
+        if (url.pathname.startsWith("/watch")) {
+          id = url.searchParams.get("v") || ""
+        } else if (url.pathname.startsWith("/embed/")) {
+          id = url.pathname.split("/embed/")[1] || ""
+        } else if (url.pathname.startsWith("/shorts/")) {
+          id = url.pathname.split("/shorts/")[1] || ""
+        }
+      }
+      if (!id) return null
+      return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
+    } catch {
+      return null
+    }
+  }
+
+  const isUrlOrAbsolutePath = (s: string | null | undefined): boolean => {
+    if (!s) return false
+    return /^https?:\/\//i.test(s) || s.startsWith('/')
+  }
+
+  const getThumbnailSrc = (video: Video): string => {
+    // 1) If a valid absolute URL or app path was provided, use it
+    if (isUrlOrAbsolutePath(video.thumbnail)) return String(video.thumbnail)
+
+    // 2) Try to derive from YouTube link if src is YouTube
+    if (video.src) {
+      const yt = toYouTubeThumb(String(video.src))
+      if (yt) return yt
+    }
+
+    // 3) Fallback
+    return "/placeholder.svg"
+  }
+
   const currentVideo = activeIndex !== null ? videos[activeIndex] : null
   const youtubeEmbed = currentVideo?.src ? toYouTubeEmbed(String(currentVideo.src)) : null
 
@@ -122,7 +174,7 @@ export function ModelsVideos() {
             >
               <div className="relative overflow-hidden rounded-lg shadow-lg">
                 <Image
-                  src={(video.thumbnail as string) || "/placeholder.svg"}
+                  src={getThumbnailSrc(video)}
                   alt={language === "ar" ? (video.title_ar || "") : (video.title_en || "")}
                   width={800}
                   height={256}
