@@ -4,7 +4,6 @@ import { Play, Volume2, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useLanguage } from "@/lib/language-context"
 import Image from "next/image"
-import { fetchVideos } from "@/lib/api"
 import type { Video } from "@/lib/types"
 
 export function ModelsVideos() {
@@ -18,8 +17,10 @@ export function ModelsVideos() {
     let mounted = true
     ;(async () => {
       try {
-        const data = await fetchVideos()
-        if (mounted) setVideos(data)
+        const res = await fetch("/api/videos")
+        const json = await res.json()
+        const data = Array.isArray(json?.videos) ? (json.videos as Video[]) : []
+        if (mounted && json?.ok) setVideos(data)
       } catch (e) {
         console.error("Failed to load videos:", e)
       } finally {
@@ -195,22 +196,23 @@ export function ModelsVideos() {
               className="group cursor-pointer"
               onClick={() => setActiveIndex(index)}
             >
-              <div className="relative overflow-hidden rounded-lg shadow-lg">
+              <div className="relative h-64 overflow-hidden rounded-lg shadow-lg">
                 <Image
                   src={getThumbnailSrc(video)}
                   alt={language === "ar" ? (video.title_ar || "") : (video.title_en || "")}
-                  width={800}
-                  height={256}
-                  className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-500"
+                  fill
+                  sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                  className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                   quality={85}
                 />
+
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
 
                 {/* Play Button */}
                 <motion.div whileHover={{ scale: 1.1 }} className="absolute inset-0 flex items-center justify-center">
                   <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:bg-white transition-colors duration-300">
-                  <Play className="h-6 w-6 text-gray-900 ml-1" />
+                    <Play className="h-6 w-6 text-gray-900 ml-1" />
                   </div>
                 </motion.div>
 

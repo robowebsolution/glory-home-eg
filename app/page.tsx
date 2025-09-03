@@ -63,6 +63,7 @@ export default function HomePage() {
       <main>
         <HeroSection />
         <FeaturedProducts />
+        <ModelsVideos />
         <ParallaxSection />
         <LatestProjects />
         <NewBedrooms />
@@ -71,7 +72,6 @@ export default function HomePage() {
         <Categories />
         <OurCustomers />
         <Warranty />
-        <ModelsVideos />
         <CustomerFeedback />
       </main>
       <Footer />

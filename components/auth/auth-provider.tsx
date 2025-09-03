@@ -28,12 +28,34 @@ export function AuthProvider({ children, session: _initialSession }: { children:
   const reqIdRef = useRef(0);
 
   // Utility: ensure long network calls can't hang the UI
+  class TimeoutError extends Error {
+    ms: number
+    constructor(ms: number) {
+      super(`timeout after ${ms}ms`)
+      this.name = "TimeoutError"
+      this.ms = ms
+    }
+  }
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
   const withTimeout = <T,>(promise: Promise<T>, ms = 3000) => {
     return Promise.race<T>([
       promise,
-      new Promise<T>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)) as Promise<T>,
-    ]);
-  };
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new TimeoutError(ms)), ms)
+      ) as Promise<T>,
+    ])
+  }
+  const withTimeoutRetry = async <T,>(fn: () => Promise<T>, ms: number, retries = 1): Promise<T> => {
+    try {
+      return await withTimeout(fn(), ms)
+    } catch (e) {
+      if (retries > 0 && e instanceof TimeoutError) {
+        await sleep(Math.min(400, Math.max(200, Math.floor(ms / 4))))
+        return withTimeoutRetry(fn, ms, retries - 1)
+      }
+      throw e
+    }
+  }
 
   const user = session?.user ?? null;
 
@@ -46,10 +68,14 @@ export function AuthProvider({ children, session: _initialSession }: { children:
     }
 
     try {
-      const [profileResult, adminResult] = await withTimeout(Promise.all([
-        supabase.from("profiles").select("*").eq("id", userId).single(),
-        supabase.from("admin_users").select("user_id").eq("user_id", userId).single(),
-      ]), 3000);
+      const [profileResult, adminResult] = await withTimeoutRetry(
+        () => Promise.all([
+          supabase.from("profiles").select("*").eq("id", userId).single(),
+          supabase.from("admin_users").select("user_id").eq("user_id", userId).single(),
+        ]),
+        6000,
+        1
+      );
 
       // Ignore if a newer request has been made
       if (myId !== reqIdRef.current) return;
@@ -61,7 +87,11 @@ export function AuthProvider({ children, session: _initialSession }: { children:
       setIsAdmin(!adminResult.error && !!adminResult.data);
     } catch (error) {
       if (myId !== reqIdRef.current) return;
-      console.error("Error in fetchProfileAndAdminStatus:", error);
+      if (error instanceof TimeoutError) {
+        console.warn("fetchProfileAndAdminStatus timed out");
+      } else {
+        console.error("Error in fetchProfileAndAdminStatus:", error);
+      }
       setIsAdmin(false);
       setProfile(null);
     }
@@ -79,12 +109,20 @@ export function AuthProvider({ children, session: _initialSession }: { children:
     // Fetch initial session (only time we show the loading screen)
     const getInitialSession = async () => {
       try {
-        const res = await withTimeout(supabase.auth.getSession(), 3000) as { data: { session: Session | null } };
+        const res = await withTimeoutRetry(
+          () => supabase.auth.getSession(),
+          10000,
+          1
+        ) as { data: { session: Session | null } };
         const session = res.data.session;
         setSession(session);
         await fetchProfileAndAdminStatus(session?.user?.id);
       } catch (error) {
-        console.error("Error getting initial session:", error);
+        if (error instanceof TimeoutError) {
+          console.warn("getSession timed out");
+        } else {
+          console.error("Error getting initial session:", error);
+        }
         setSession(null);
         setIsAdmin(false);
         setProfile(null);

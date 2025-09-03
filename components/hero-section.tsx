@@ -59,7 +59,7 @@ export function HeroSection() {
   const arrowTransformClass = isRTL ? "group-hover:-translate-x-1 mr-2" : "group-hover:translate-x-1 ml-2"
 
   return (
-    <section ref={targetRef} className="relative h-screen w-full flex items-center justify-center overflow-hidden">
+    <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
       {/* Background Video */}
       <div className="absolute inset-0 z-0">
         {/* High-priority poster image to be the discoverable LCP element */}
@@ -96,13 +96,13 @@ export function HeroSection() {
           }}
         >
           {/* يمكنك اختيار فيديو من هنا: https://coverr.co/ */}
-          <source type="video/mp4" src='/hero-video.mp4' />
+          <source type="video/mp4" src='/hero-video.webm' />
         </video>
         <div className="absolute inset-0 z-20 bg-black/50" aria-hidden="true" />
       </div>
 
       {/* Content */}
-      <motion.div style={{ y }} className={`relative z-10 text-center max-w-5xl mx-auto px-4 sm:px-6 ${isRTL ? "rtl" : ""}`}>
+      <motion.div ref={targetRef} style={{ y }} className={`relative z-10 text-center max-w-5xl mx-auto px-4 sm:px-6 ${isRTL ? "rtl" : ""}`}>
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}

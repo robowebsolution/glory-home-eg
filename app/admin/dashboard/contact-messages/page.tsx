@@ -50,6 +50,23 @@ export default function ContactMessagesPage() {
     }
   };
 
+  const handleDeleteMessage = async (id: number) => {
+    const ok = window.confirm('Are you sure you want to delete this message? This action cannot be undone.');
+    if (!ok) return;
+
+    const { error } = await supabase
+      .from('contact_messages')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Failed to delete message.');
+    } else {
+      setMessages(prev => prev.filter(m => m.id !== id));
+      toast.success('Message deleted.');
+    }
+  };
+
   return (
     <div className="p-4 md:p-6">
       <h1 className="text-2xl md:text-3xl font-bold mb-6">Contact Form Messages</h1>
@@ -72,12 +89,21 @@ export default function ContactMessagesPage() {
                 <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-md whitespace-pre-wrap text-sm">
                   {message.message}
                 </div>
-                <Button 
-                  onClick={() => handleToggleReadStatus(message.id, message.is_read)}
-                  variant={message.is_read ? 'outline' : 'default'}
-                  className="w-full">
-                  {message.is_read ? 'Mark as Unread' : 'Mark as Read'}
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    onClick={() => handleToggleReadStatus(message.id, message.is_read)}
+                    variant={message.is_read ? 'outline' : 'default'}
+                    className="w-full">
+                    {message.is_read ? 'Mark as Unread' : 'Mark as Read'}
+                  </Button>
+                  <Button
+                    onClick={() => handleDeleteMessage(message.id)}
+                    variant="destructive"
+                    className="w-full"
+                    title="Delete message">
+                    Delete
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}

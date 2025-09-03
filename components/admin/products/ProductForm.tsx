@@ -61,6 +61,9 @@ export function ProductForm({ product, categories, onSubmit, isPending }: Produc
   const { fields: galleryFields, append: appendGallery, remove: removeGallery, update: updateGallery, move: moveGallery, replace: replaceGallery } = useFieldArray({ control, name: 'gallery_images' });
 
   const [galleryUrlInput, setGalleryUrlInput] = useState('');
+  // Control media sub-tabs (storage vs links)
+  const [mediaSubTab, setMediaSubTab] = useState<'storage' | 'links'>('storage');
+  const switchToLinks = () => setMediaSubTab('links');
 
   // Helpers for Links UX
   // Extract URLs robustly from arbitrary text (handles spaces/newlines and avoids over-splitting)
@@ -157,7 +160,7 @@ export function ProductForm({ product, categories, onSubmit, isPending }: Produc
             </TabsContent>
 
             <TabsContent value="media" className="space-y-6 m-0">
-              <Tabs defaultValue="storage" className="space-y-4">
+              <Tabs value={mediaSubTab} onValueChange={(v) => setMediaSubTab(v as 'storage' | 'links')} className="space-y-4">
                 <TabsList>
                   <TabsTrigger value="storage">Storage</TabsTrigger>
                   <TabsTrigger value="links">Links</TabsTrigger>
@@ -175,6 +178,7 @@ export function ProductForm({ product, categories, onSubmit, isPending }: Produc
                           <ImageUploader
                             value={field.value}
                             onChange={field.onChange}
+                            onOversize={switchToLinks}
                           />
                         </FormControl>
                         <FormMessage />
@@ -202,6 +206,7 @@ export function ProductForm({ product, categories, onSubmit, isPending }: Produc
                                       updateGallery(index, { value: url });
                                     }
                                   }}
+                                  onOversize={switchToLinks}
                                 />
                               </FormControl>
                             </FormItem>
@@ -216,6 +221,7 @@ export function ProductForm({ product, categories, onSubmit, isPending }: Produc
                           }
                         }}
                         multiple
+                        onOversize={switchToLinks}
                       />
                     </div>
                   </div>

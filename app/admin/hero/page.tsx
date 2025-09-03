@@ -12,6 +12,13 @@ import { Switch } from '@/components/ui/switch'
 import { toast } from '@/hooks/use-toast'
 import { Loader2, Save, Eye, Upload, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
+const MAX_FILE_SIZE = 512 * 1024; // 0.5 MB
+
+declare global {
+  interface Window {
+    cloudinary: any;
+  }
+}
 
 interface HeroContent {
   id?: number
@@ -125,6 +132,14 @@ export default function HeroManagement() {
 
     setImageUploading(true)
     try {
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: language === 'ar' ? 'حجم الملف كبير' : 'File too large',
+          description: language === 'ar' ? 'الحد الأقصى لحجم الصورة هو 0.5 ميجابايت' : 'Maximum image size is 0.5 MB',
+          variant: 'destructive'
+        })
+        return
+      }
       const fileExt = file.name.split('.').pop()
       const fileName = `hero-${Date.now()}.${fileExt}`
       const filePath = `hero/${fileName}`
@@ -157,6 +172,56 @@ export default function HeroManagement() {
       })
     } finally {
       setImageUploading(false)
+    }
+  }
+
+  const ensureCloudinaryLoaded = () => new Promise<void>((resolve, reject) => {
+    if (typeof window !== 'undefined' && window.cloudinary) return resolve();
+    const script = document.createElement('script');
+    script.src = 'https://widget.cloudinary.com/v2.0/global/all.js';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load Cloudinary widget'));
+    document.body.appendChild(script);
+  });
+
+  const openCloudinaryWidget = async () => {
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+    if (!cloudName || !uploadPreset) {
+      toast({
+        title: language === 'ar' ? 'غير مُهيأ' : 'Not configured',
+        description: language === 'ar' ? 'يرجى إعداد متغيرات Cloudinary في البيئة' : 'Please set Cloudinary env vars',
+        variant: 'destructive'
+      })
+      return;
+    }
+    try {
+      await ensureCloudinaryLoaded();
+      const widget = window.cloudinary.createUploadWidget(
+        {
+          cloudName,
+          uploadPreset,
+          multiple: false,
+          sources: ['local', 'url', 'camera'],
+          maxFileSize: MAX_FILE_SIZE,
+        },
+        (error: any, result: any) => {
+          if (error) {
+            toast({ title: 'Cloudinary', description: String(error?.message || error), variant: 'destructive' });
+            return;
+          }
+          if (result && result.event === 'success') {
+            const url = result.info?.secure_url || result.info?.url;
+            if (url) {
+              setHeroContent(prev => ({ ...prev, background_image: url }));
+              toast({ title: language === 'ar' ? 'تم الرفع' : 'Uploaded', description: language === 'ar' ? 'تم الرفع عبر Cloudinary' : 'Uploaded via Cloudinary' });
+            }
+          }
+        }
+      );
+      widget.open();
+    } catch (e: any) {
+      toast({ title: 'Cloudinary', description: String(e?.message || e), variant: 'destructive' });
     }
   }
 
@@ -469,6 +534,12 @@ export default function HeroManagement() {
                     onChange={handleImageUpload}
                     disabled={imageUploading}
                   />
+                  <div className="flex items-center gap-2 mt-2">
+                    <Button variant="secondary" type="button" onClick={openCloudinaryWidget} disabled={imageUploading}>
+                      {language === 'ar' ? 'الرفع عبر Cloudinary' : 'Upload via Cloudinary'}
+                    </Button>
+                    <span className="text-xs text-muted-foreground">{language === 'ar' ? 'الحد الأقصى 0.5 ميجابايت' : 'Max 0.5 MB'}</span>
+                  </div>
                   {imageUploading && (
                     <div className="flex items-center mt-2">
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
