@@ -49,7 +49,8 @@ const Categories = dynamic(() => import("@/components/categories").then(mod => m
   )
 });
 const LatestProjects = dynamic(() => import("@/components/latest-projects").then(mod => mod.LatestProjects));
-const Warranty = dynamic(() => import("@/components/warranty").then(mod => mod.Warranty));
+const OurGloryDoors = dynamic(() => import("@/components/our-glory-doors").then(mod => mod.OurGloryDoors));
+const TechnicalDrawings = dynamic(() => import("@/components/technical-drawings").then(mod => mod.TechnicalDrawings));
 const ModelsVideos = dynamic(() => import("@/components/models-videos").then(mod => mod.ModelsVideos));
 const CustomerFeedback = dynamic(() => import("@/components/customer-feedback").then(mod => mod.CustomerFeedback));
 const Footer = dynamic(() => import("@/components/footer").then(mod => mod.Footer));
@@ -66,12 +67,13 @@ export default function HomePage() {
         <ModelsVideos />
         <ParallaxSection />
         <LatestProjects />
+        <OurGloryDoors />
+        <TechnicalDrawings />
         <NewBedrooms />
         <WhoWeAre />
         <AboutCeo />
         <Categories />
         <OurCustomers />
-        <Warranty />
         <CustomerFeedback />
       </main>
       <Footer />
