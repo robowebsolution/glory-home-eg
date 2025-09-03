@@ -572,8 +572,8 @@ export const ProductClientPage: FC<ProductClientPageProps> = ({ product }) => {
                                         </div>
                                         <div className="text-center p-6 bg-gray-50 dark:bg-gray-800 rounded-xl">
                                             <RotateCcw className="w-8 h-8 text-gray-900 dark:text-gray-100 mx-auto mb-3" />
-                                            <h3 className="font-semibold mb-2">{language === 'ar' ? 'إرجاع سهل' : 'Easy Returns'}</h3>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400">{language === 'ar' ? 'سياسة إرجاع خلال 30 يومًا' : '30-day return policy'}</p>
+                                            <h3 className="font-semibold mb-2">{language === 'ar' ? 'توصيل سهل' : 'Easy shipping'}</h3>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">{language === 'ar' ? 'توصيل سريع' : 'Fast shipping'}</p>
                                         </div>
                                     </div>
                                 </div>
