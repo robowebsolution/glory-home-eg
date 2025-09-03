@@ -217,8 +217,7 @@ export const ProductClientPage: FC<ProductClientPageProps> = ({ product }) => {
 
   const trustIndicators: Indicator[] = [
     { icon: Shield, text: language === 'ar' ? 'دفع آمن' : 'Secure Payment' },
-    { icon: Truck, text: language === 'ar' ? 'شحن مجاني' : 'Free Shipping' },
-    { icon: RotateCcw, text: language === 'ar' ? 'إرجاع سهل' : 'Easy Returns' },
+    { icon: Truck, text: language === 'ar' ? 'شحن سريع' : 'fast Shipping' },
     { icon: Award, text: language === 'ar' ? 'ضمان الجودة' : 'Quality Guarantee' }
   ];
 
@@ -560,11 +559,7 @@ export const ProductClientPage: FC<ProductClientPageProps> = ({ product }) => {
                                         <h2>{language === 'ar' ? 'الشحن والإرجاع' : 'Shipping & Returns'}</h2>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
-                                        <div className="text-center p-6 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                                            <Truck className="w-8 h-8 text-gray-900 dark:text-gray-100 mx-auto mb-3" />
-                                            <h3 className="font-semibold mb-2">{language === 'ar' ? 'شحن مجاني' : 'Free Shipping'}</h3>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400">{language === 'ar' ? 'للطلبات فوق 50 دولار' : 'On orders over $50'}</p>
-                                        </div>
+                                        
                                         <div className="text-center p-6 bg-gray-50 dark:bg-gray-800 rounded-xl">
                                             <Clock className="w-8 h-8 text-gray-900 dark:text-gray-100 mx-auto mb-3" />
                                             <h3 className="font-semibold mb-2">{language === 'ar' ? 'توصيل سريع' : 'Fast Delivery'}</h3>
