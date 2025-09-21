@@ -1,29 +1,48 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 
 const PortfolioPopup = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const hasOpenedRef = useRef(false);
 
   useEffect(() => {
     // Defer popup to avoid impacting LCP: open after first interaction or a longer idle delay
     let timer: any;
-    const open = () => setIsOpen(true);
+
+    // Show once per page load only (no persistence across reloads)
+
+    const cleanup = () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener('pointerdown', onInteract);
+      window.removeEventListener('keydown', onInteract);
+      window.removeEventListener('scroll', onInteract as any);
+    };
+
+    const open = () => {
+      if (hasOpenedRef.current) return;
+      hasOpenedRef.current = true;
+      setIsOpen(true);
+      cleanup();
+    };
 
     const scheduleIdle = () => {
+      if (hasOpenedRef.current) return;
       // Open after 8s if no interaction, and only if tab is visible
       timer = setTimeout(() => {
-        if (document.visibilityState === 'visible') open();
+        if (!hasOpenedRef.current && document.visibilityState === 'visible') open();
       }, 8000);
     };
 
     const onInteract = () => {
+      if (hasOpenedRef.current) return;
       if (timer) clearTimeout(timer);
       // Open a bit later after interaction to ensure initial content paints first
       timer = setTimeout(() => {
-        if (document.visibilityState === 'visible') open();
+        if (!hasOpenedRef.current && document.visibilityState === 'visible') open();
       }, 3000);
+      // listeners are also registered with { once: true }, but we ensure cleanup anyway
       window.removeEventListener('pointerdown', onInteract);
       window.removeEventListener('keydown', onInteract);
       window.removeEventListener('scroll', onInteract as any);
@@ -34,16 +53,13 @@ const PortfolioPopup = () => {
     window.addEventListener('keydown', onInteract, { once: true });
     window.addEventListener('scroll', onInteract as any, { once: true, passive: true });
 
-    return () => {
-      if (timer) clearTimeout(timer);
-      window.removeEventListener('pointerdown', onInteract);
-      window.removeEventListener('keydown', onInteract);
-      window.removeEventListener('scroll', onInteract as any);
-    };
+    return cleanup;
   }, []);
 
   const handleClose = () => {
     setIsOpen(false);
+    // do not allow reopen in the same page load after manual close
+    hasOpenedRef.current = true;
   };
 
   const handleDownload = () => {

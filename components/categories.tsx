@@ -5,11 +5,11 @@ import Link from "next/link"
 import type { Category } from "@/lib/supabase"
 import { fetchCategories } from "@/lib/api"
 import { isSupabaseConfigured } from "@/lib/supabase-client"
-import { motion, useReducedMotion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { getPrefetchedCategories, setPrefetchedCategories } from "@/lib/prefetch-store"
 import { useLanguage } from "@/lib/language-context"
+import Image from "next/image"
 import {
   Bed,
   Sofa,
@@ -32,7 +32,6 @@ export function Categories() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { t, language, isRTL } = useLanguage()
-  const prefersReducedMotion = useReducedMotion()
   const [visibleCount, setVisibleCount] = useState(8)
 
   const categoryIcons = {
@@ -79,14 +78,23 @@ export function Categories() {
           setCategories(prefetched as Category[]);
           setLoading(false);
           // Background refresh to keep data fresh
-          fetchCategories()
-            .then((fresh) => {
-              if (Array.isArray(fresh) && fresh.length > 0) {
-                setCategories(fresh as Category[]);
-                setPrefetchedCategories(fresh as any);
-              }
-            })
-            .catch(() => {})
+          const schedule = (cb: () => void) => {
+            if (typeof window !== 'undefined' && (window as any).requestIdleCallback) {
+              (window as any).requestIdleCallback(cb);
+            } else {
+              setTimeout(cb, 600);
+            }
+          };
+          schedule(() => {
+            fetchCategories()
+              .then((fresh) => {
+                if (Array.isArray(fresh) && fresh.length > 0) {
+                  setCategories(fresh as Category[]);
+                  setPrefetchedCategories(fresh as any);
+                }
+              })
+              .catch(() => {})
+          });
           return;
         }
 
@@ -142,13 +150,7 @@ export function Categories() {
   return (
     <section className="py-20 bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
-          whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          viewport={{ once: true, amount: 0.2 }}
-          className={`text-center mb-16 ${isRTL ? "rtl" : ""}`}
-        >
+        <div className={`text-center mb-16 ${isRTL ? "rtl" : ""}`}>
           <h2 className="text-4xl md:text-5xl font-light text-gray-900 dark:text-white mb-4">
             {t("categories.title")} <span className="font-bold">{t("categories.title.bold")}</span>
           </h2>
@@ -159,7 +161,7 @@ export function Categories() {
               <span className="text-sm">{error}</span>
             </div>
           )}
-        </motion.div>
+        </div>
 
         {/* ======================================================== */}
         {/*           هنا يبدأ التعديل الرئيسي لشكل البطاقات          */}
@@ -171,19 +173,22 @@ export function Categories() {
               <div
                 key={category.id}
                 className="h-full"
+                style={{ contentVisibility: 'auto' as any }}
               >
                 <Link href={`/categories/${category.slug}`} className="block h-full">
-                  <Card className="h-full flex flex-col rounded-2xl shadow-md hover:shadow-xl dark:bg-gray-800 border-gray-200 dark:border-gray-700 group overflow-hidden transition-all duration-300">
+                  <Card className="h-full flex flex-col rounded-2xl shadow-md hover:shadow-lg dark:bg-gray-800 border-gray-200 dark:border-gray-700 group overflow-hidden transition-all duration-300">
                     
                     {/* 1. حاوية الصورة أو الأيقونة */}
                     <div className="relative w-full h-48 overflow-hidden">
                       {category.image_url ? (
-                        <img
+                        <Image
                           src={category.image_url}
                           alt={language === "ar" && category.name_ar ? category.name_ar : category.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out"
+                          fill
+                          sizes="(min-width:1280px) 25vw, (min-width:768px) 33vw, (min-width:640px) 50vw, 100vw"
+                          className="object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out"
                           loading="lazy"
-                          decoding="async"
+                          quality={80}
                         />
                       ) : (
                         // في حال عدم وجود صورة، نعرض أيقونة
