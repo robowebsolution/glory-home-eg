@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import type { Category } from "@/lib/supabase"
-import { fetchCategories, fetchProductIdsByCategory } from "@/lib/api"
+import { fetchCategories } from "@/lib/api"
 import { isSupabaseConfigured } from "@/lib/supabase-client"
 import { motion, useReducedMotion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { getPrefetchedCategories, setPrefetchedCategories } from "@/lib/prefetch-store"
 import { useLanguage } from "@/lib/language-context"
 import {
   Bed,
@@ -32,6 +33,7 @@ export function Categories() {
   const [error, setError] = useState<string | null>(null)
   const { t, language, isRTL } = useLanguage()
   const prefersReducedMotion = useReducedMotion()
+  const [visibleCount, setVisibleCount] = useState(8)
 
   const categoryIcons = {
     bedrooms: Bed,
@@ -71,29 +73,32 @@ export function Categories() {
           return;
         }
 
-        const [categoriesData, productIdPairs] = await Promise.all([
-          fetchCategories(),
-          fetchProductIdsByCategory(),
-        ]);
+        // Use prefetched data immediately if available
+        const prefetched = getPrefetchedCategories();
+        if (Array.isArray(prefetched) && prefetched.length > 0) {
+          setCategories(prefetched as Category[]);
+          setLoading(false);
+          // Background refresh to keep data fresh
+          fetchCategories()
+            .then((fresh) => {
+              if (Array.isArray(fresh) && fresh.length > 0) {
+                setCategories(fresh as Category[]);
+                setPrefetchedCategories(fresh as any);
+              }
+            })
+            .catch(() => {})
+          return;
+        }
 
-        let finalCategories: Category[] = [];
+        const categoriesData = await fetchCategories();
 
         if (Array.isArray(categoriesData) && categoriesData.length > 0) {
-          const countsByCategory = (productIdPairs || []).reduce((acc: Record<string, number>, p: { id: string; category_id: string }) => {
-            acc[p.category_id] = (acc[p.category_id] || 0) + 1
-            return acc
-          }, {} as Record<string, number>)
-
-          finalCategories = categoriesData.map(category => ({
-            ...category,
-            product_count: countsByCategory[category.id] || 0,
-          }))
+          setCategories(categoriesData as Category[]);
+          setPrefetchedCategories(categoriesData as any);
         } else {
-          finalCategories = defaultCategories;
+          setCategories(defaultCategories);
           setError("No categories found in database - showing defaults");
         }
-        setCategories(finalCategories);
-
       } catch (error) {
         console.error("Failed to load data:", error);
         setError("Failed to load categories - showing defaults");
@@ -160,15 +165,11 @@ export function Categories() {
         {/*           هنا يبدأ التعديل الرئيسي لشكل البطاقات          */}
         {/* ======================================================== */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
-          {categories.map((category, index) => {
+          {categories.slice(0, visibleCount).map((category, index) => {
             const IconComponent = categoryIcons[category.slug as keyof typeof categoryIcons] || MoreHorizontal
             return (
-              <motion.div
+              <div
                 key={category.id}
-                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                viewport={{ once: true, amount: 0.15 }}
                 className="h-full"
               >
                 <Link href={`/categories/${category.slug}`} className="block h-full">
@@ -208,10 +209,20 @@ export function Categories() {
                     </CardContent>
                   </Card>
                 </Link>
-              </motion.div>
+              </div>
             )
           })}
         </div>
+        {categories.length > visibleCount && (
+          <div className="mt-10 flex justify-center">
+            <Button
+              onClick={() => setVisibleCount((prev) => Math.min(prev + 8, categories.length))}
+              className="px-6 py-2 text-sm font-semibold rounded-full bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 transition-colors"
+            >
+              {language === "ar" ? "شاهد المزيد" : "See more"}
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   )

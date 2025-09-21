@@ -2,7 +2,7 @@
 import { supabase, isSupabaseConfigured, supabaseConfig } from "@/lib/supabase-client"
 import type { Video } from "@/lib/types"
 
-// تعديل دالة جلب الفئات لدعم التخزين المؤقت
+// تعديل دالة جلب الفئات لتشمل عدد المنتجات بشكل مُجمّع بدون جلب كل المنتجات للواجهة
 export async function fetchCategories() {
   try {
     // Check if Supabase is properly configured
@@ -11,25 +11,36 @@ export async function fetchCategories() {
       return []
     }
 
-    const { data: categories, error } = await supabase
+    // نحصل على الفئات مع عدد المنتجات المرتبطة بها باستخدام تجميعة PostgREST
+    // products(count) سترجع مصفوفة تحتوي على كائن واحد فيه count لكل فئة
+    const { data, error } = await supabase
       .from("categories")
-      .select("*")
+      .select(
+        "id, name, name_ar, slug, description, description_ar, image_url, created_at, updated_at, products:products(count)"
+      )
+      .eq("products.in_stock", true)
       .order("name")
-      
-
-    console.log("Raw response from Supabase:", { categories, error })
 
     if (error) {
       console.error("Supabase error fetching categories:", error)
       return []
     }
 
-    if (!categories || categories.length === 0) {
-      console.warn("No categories returned from Supabase.")
-    }
+    // طبيعـة البيانات المرجعة: { ..., products: [{ count: number }] }
+    const normalized = (data || []).map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      name_ar: c.name_ar,
+      slug: c.slug,
+      description: c.description,
+      description_ar: c.description_ar,
+      image_url: c.image_url,
+      created_at: c.created_at,
+      updated_at: c.updated_at,
+      product_count: c?.products?.[0]?.count ?? 0,
+    }))
 
-    console.log("Categories fetched successfully:", categories?.length || 0)
-    return categories || []
+    return normalized
   } catch (error) {
     console.error("Error fetching categories:", error)
     console.error("Supabase config:", supabaseConfig)

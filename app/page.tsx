@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Navigation } from "@/components/navigation";
 import { HeroSection } from "@/components/hero-section";
 import dynamic from 'next/dynamic';
+import { PrefetchCategories } from "@/components/prefetch-categories";
 
 export const metadata: Metadata = {
   title: "Glory Home - Modern Furniture Design & 3D Visualization",
@@ -62,6 +63,8 @@ export default function HomePage() {
       <PortfolioPopup />
       <Navigation />
       <main>
+        {/* Prefetch categories data early for smoother scroll when reaching the section */}
+        <PrefetchCategories />
         <HeroSection />
         <FeaturedProducts />
         <ModelsVideos />
