@@ -93,6 +93,7 @@ export const ProductClientPage: FC<ProductClientPageProps> = ({ product }) => {
 
   const [activeTab, setActiveTab] = useState('description');
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
   const [similarLoading, setSimilarLoading] = useState<boolean>(false);
 
@@ -145,6 +146,29 @@ export const ProductClientPage: FC<ProductClientPageProps> = ({ product }) => {
 
   const nextImage = () => setSelectedImageIndex((prev) => (prev + 1) % images.length);
   const prevImage = () => setSelectedImageIndex((prev) => (prev - 1 + images.length) % images.length);
+
+  useEffect(() => {
+    if (!showGalleryModal) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowGalleryModal(false);
+      } else if (event.key === 'ArrowRight') {
+        setSelectedImageIndex((prev) =>
+          isRTL ? (prev - 1 + images.length) % images.length : (prev + 1) % images.length
+        );
+      } else if (event.key === 'ArrowLeft') {
+        setSelectedImageIndex((prev) =>
+          isRTL ? (prev + 1) % images.length : (prev - 1 + images.length) % images.length
+        );
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    document.body.classList.add('overflow-hidden');
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.classList.remove('overflow-hidden');
+    };
+  }, [showGalleryModal, isRTL, images.length]);
 
   // Copy current product link to clipboard and show a toast
   const handleShareClick = async () => {
@@ -379,8 +403,20 @@ export const ProductClientPage: FC<ProductClientPageProps> = ({ product }) => {
 
           {/* Left Column: Image Gallery */}
           <section className="lg:w-1/2 w-full lg:sticky top-28 self-start space-y-4">
-            <div className="relative group">
-              <div className="relative aspect-square rounded-3xl overflow-hidden bg-white dark:bg-gray-800 shadow-2xl">
+            <div
+              className="relative group"
+              role="button"
+              tabIndex={0}
+              onClick={() => setShowGalleryModal(true)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setShowGalleryModal(true);
+                }
+              }}
+              aria-label={language === 'ar' ? 'عرض معرض الصور' : 'Open image gallery'}
+            >
+              <div className="relative aspect-square rounded-3xl overflow-hidden bg-white dark:bg-gray-800 shadow-2xl cursor-zoom-in">
                 <AnimatePresence initial={false}>
                   <motion.div key={selectedImageIndex} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }} className="absolute inset-0">
                     {isAllowedNextImage(images[selectedImageIndex]) ? (
@@ -404,10 +440,22 @@ export const ProductClientPage: FC<ProductClientPageProps> = ({ product }) => {
                 
                 {images.length > 1 && (
                   <>
-                    <button onClick={isRTL ? nextImage : prevImage} className={`absolute ${isRTL ? 'right-4':'left-4'} top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-900 p-2 rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 opacity-0 group-hover:opacity-100`}>
+                    <button
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        (isRTL ? nextImage : prevImage)();
+                      }}
+                      className={`absolute ${isRTL ? 'right-4':'left-4'} top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-900 p-2 rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 opacity-0 group-hover:opacity-100`}
+                    >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
-                    <button onClick={isRTL ? prevImage : nextImage} className={`absolute ${isRTL ? 'left-4':'right-4'} top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-900 p-2 rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 opacity-0 group-hover:opacity-100`}>
+                    <button
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        (isRTL ? prevImage : nextImage)();
+                      }}
+                      className={`absolute ${isRTL ? 'left-4':'right-4'} top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-900 p-2 rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 opacity-0 group-hover:opacity-100`}
+                    >
                       <ChevronRight className="w-5 h-5" />
                     </button>
                   </>
@@ -430,7 +478,11 @@ export const ProductClientPage: FC<ProductClientPageProps> = ({ product }) => {
             {images.length > 1 && (
               <div className="flex gap-3 overflow-x-auto pb-2">
                 {images.map((img, idx) => (
-                  <button key={idx} onClick={() => setSelectedImageIndex(idx)} className={`relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden transition-all duration-300 ${selectedImageIndex === idx ? "ring-2 ring-black shadow-lg scale-105 dark:ring-white" : "ring-1 ring-gray-200 dark:ring-gray-700 hover:ring-gray-300 dark:hover:ring-gray-600"}`} >
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={`relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden transition-all duration-300 ${selectedImageIndex === idx ? "ring-2 ring-black shadow-lg scale-105 dark:ring-white" : "ring-1 ring-gray-200 dark:ring-gray-700 hover:ring-gray-300 dark:hover:ring-gray-600"}`}
+                  >
                     {isAllowedNextImage(img) ? (
                       <Image src={img} alt={`Thumbnail ${idx + 1}`} fill className="object-cover" sizes="80px" />
                     ) : (
@@ -665,6 +717,103 @@ export const ProductClientPage: FC<ProductClientPageProps> = ({ product }) => {
       )}
 
       <AnimatePresence>
+        {showGalleryModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[95] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setShowGalleryModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="relative max-w-5xl w-full space-y-6"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowGalleryModal(false)}
+                className="absolute -top-10 right-0 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-all backdrop-blur"
+                aria-label={language === 'ar' ? 'إغلاق المعرض' : 'Close gallery'}
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="relative aspect-[4/3] w-full rounded-3xl overflow-hidden bg-black shadow-2xl">
+                <AnimatePresence initial={false} mode="wait">
+                  <motion.div
+                    key={selectedImageIndex}
+                    initial={{ opacity: 0, scale: 0.97 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.97 }}
+                    transition={{ duration: 0.25 }}
+                    className="absolute inset-0"
+                  >
+                    {isAllowedNextImage(images[selectedImageIndex]) ? (
+                      <Image
+                        src={images[selectedImageIndex]}
+                        alt={`${product.name} - lightbox image ${selectedImageIndex + 1}`}
+                        fill
+                        sizes="(max-width: 1024px) 90vw, 60vw"
+                        className="object-contain bg-black"
+                      />
+                    ) : (
+                      <img
+                        src={images[selectedImageIndex]}
+                        alt={`${product.name} - lightbox image ${selectedImageIndex + 1}`}
+                        className="w-full h-full object-contain bg-black"
+                      />
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+
+                {images.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => (isRTL ? nextImage : prevImage)()}
+                      className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 bg-white/80 text-gray-900 hover:bg-white p-3 rounded-full shadow-lg transition-all`}
+                      aria-label={language === 'ar' ? 'الصورة السابقة' : 'Previous image'}
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={() => (isRTL ? prevImage : nextImage)()}
+                      className={`absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 -translate-y-1/2 bg-white/80 text-gray-900 hover:bg-white p-3 rounded-full shadow-lg transition-all`}
+                      aria-label={language === 'ar' ? 'الصورة التالية' : 'Next image'}
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                  </>
+                )}
+
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-1 rounded-full text-sm">
+                  {selectedImageIndex + 1} / {images.length}
+                </div>
+              </div>
+
+              {images.length > 1 && (
+                <div className="flex gap-3 overflow-x-auto pb-2" dir={isRTL ? 'rtl' : 'ltr'}>
+                  {images.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedImageIndex(idx)}
+                      className={`relative flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden transition-all duration-300 ${selectedImageIndex === idx ? 'ring-2 ring-white scale-105 shadow-xl' : 'ring-1 ring-white/40 hover:ring-white/60'}`}
+                      aria-label={(language === 'ar' ? 'معاينة صورة' : 'Preview image') + ` ${idx + 1}`}
+                    >
+                      {isAllowedNextImage(img) ? (
+                        <Image src={img} alt={`Lightbox thumbnail ${idx + 1}`} fill className="object-cover" sizes="96px" />
+                      ) : (
+                        <img src={img} alt={`Lightbox thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
         {showVideoModal && product.video_url && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4" onClick={() => setShowVideoModal(false)}>
                 <motion.div initial={{scale: 0.8}} animate={{scale: 1}} exit={{scale: 0.8}} className="relative max-w-4xl w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
