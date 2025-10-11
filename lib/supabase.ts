@@ -107,20 +107,20 @@ export const getCachedCategories = cache(async (): Promise<Category[]> => {
   const { data, error } = await supabase
     .from('categories')
     .select('*')
-    .order('name')
+    .order('name');
   
   if (error) {
-    console.error('Error fetching categories:', error.message)
-    return []
+    console.error('Error fetching categories:', error.message);
+    return [];
   }
   
-  return data || []
-})
+  return data || [];
+});
 
-export const getHdfCountries = cache(async (): Promise<Category[]> => {
-  const hdfCategory = await getCachedCategoryBySlug('hdf')
+export const getHdfCountries = async (): Promise<Category[]> => {
+  const hdfCategory = await getCachedCategoryBySlug('hdf');
   if (!hdfCategory) {
-    return []
+    return [];
   }
 
   const { data, error } = await supabase
@@ -136,14 +136,14 @@ export const getHdfCountries = cache(async (): Promise<Category[]> => {
   }
 
   return data || []
-})
+};
 
-export const getHdfCountrySlugs = cache(async (): Promise<string[]> => {
+export const getHdfCountrySlugs = async (): Promise<string[]> => {
   const countries = await getHdfCountries()
   return countries.map((country) => country.slug)
-})
+};
 
-export const getManufacturersByCountrySlug = cache(async (countrySlug: string): Promise<Manufacturer[]> => {
+export const getManufacturersByCountrySlug = async (countrySlug: string): Promise<Manufacturer[]> => {
   if (!countrySlug) return []
 
   const country = await getCachedCategoryBySlug(countrySlug)
@@ -164,9 +164,9 @@ export const getManufacturersByCountrySlug = cache(async (countrySlug: string): 
   }
 
   return data || []
-})
+};
 
-export const getManufacturerBySlug = cache(async (manufacturerSlug: string): Promise<Manufacturer | null> => {
+export const getManufacturerBySlug = async (manufacturerSlug: string): Promise<Manufacturer | null> => {
   if (!manufacturerSlug) return null
 
   const { data, error } = await supabase
@@ -183,14 +183,14 @@ export const getManufacturerBySlug = cache(async (manufacturerSlug: string): Pro
   }
 
   return data ?? null
-})
+};
 
-export const getManufacturerSlugsByCountry = cache(async (countrySlug: string): Promise<string[]> => {
+export const getManufacturerSlugsByCountry = async (countrySlug: string): Promise<string[]> => {
   const manufacturers = await getManufacturersByCountrySlug(countrySlug)
   return manufacturers.map((manufacturer) => manufacturer.slug)
-})
+};
 
-export const getProductsByManufacturerSlug = cache(async (manufacturerSlug: string): Promise<Product[]> => {
+export const getProductsByManufacturerSlug = async (manufacturerSlug: string): Promise<Product[]> => {
   if (!manufacturerSlug) return []
 
   const manufacturer = await getManufacturerBySlug(manufacturerSlug)
@@ -211,7 +211,7 @@ export const getProductsByManufacturerSlug = cache(async (manufacturerSlug: stri
   }
 
   return data || []
-})
+};
 
 export const getCachedProductById = cache(async (id: string): Promise<Product | null> => {
   if (!id) return null;

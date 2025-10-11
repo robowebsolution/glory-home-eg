@@ -117,8 +117,11 @@ export async function saveCategory(arg1: any, arg2?: any) {
 
     // Revalidate admin list and common consumer paths
     revalidatePath('/admin/categories');
+    revalidatePath('/admin/hdf');
+    revalidatePath('/admin/products');
     revalidatePath('/');
     revalidatePath('/categories');
+    revalidatePath('/categories/hdf');
     if (categoryData.slug) {
       revalidatePath(`/categories/${categoryData.slug}`);
     }
