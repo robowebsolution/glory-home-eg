@@ -272,7 +272,7 @@ export const getCachedFeaturedProducts = cache(async (): Promise<Product[]> => {
 /**
  * دالة لجلب بيانات فئة واحدة باستخدام الـ slug الخاص بها
  */
-export const getCachedCategoryBySlug = cache(async (slug: string): Promise<Category | null> => {
+export const getCachedCategoryBySlug = async (slug: string): Promise<Category | null> => {
   if (!slug) return null;
 
   const { data, error } = await supabase
@@ -290,7 +290,7 @@ export const getCachedCategoryBySlug = cache(async (slug: string): Promise<Categ
   }
 
   return data
-})
+};
 
 /**
  * دالة لجلب منتجات فئة معينة باستخدام الـ slug الخاص بالفئة

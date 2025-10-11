@@ -136,6 +136,16 @@ export async function deleteCategory(categoryId: string) {
   const supabase = await createClient();
 
   try {
+    const { data: categoryRecord, error: fetchError } = await supabase
+      .from('categories')
+      .select('slug')
+      .eq('id', categoryId)
+      .maybeSingle();
+
+    if (fetchError) {
+      throw new Error(fetchError.message);
+    }
+
     const { error } = await supabase.from('categories').delete().eq('id', categoryId);
 
     if (error) {
@@ -143,6 +153,14 @@ export async function deleteCategory(categoryId: string) {
     }
 
     revalidatePath('/admin/categories');
+    revalidatePath('/admin/hdf');
+    revalidatePath('/admin/products');
+    revalidatePath('/');
+    revalidatePath('/categories');
+    revalidatePath('/categories/hdf');
+    if (categoryRecord?.slug) {
+      revalidatePath(`/categories/${categoryRecord.slug}`);
+    }
     return { success: true, message: 'Category deleted successfully!' };
   } catch (e: any) {
     return { success: false, message: `Database Error: ${e.message}` };

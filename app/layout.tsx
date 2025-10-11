@@ -12,6 +12,8 @@ import { Toaster } from "sonner"
 import { Toaster as ShadToaster } from "@/components/ui/toaster"
 import "./globals.css"
 import ScrollToTopOnRouteChange from "@/components/scroll-to-top"
+import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const raleway = Raleway({ subsets: ["latin"], display: 'swap' })
 
@@ -95,6 +97,8 @@ export default async function RootLayout({
             })
           }}
         />
+        <Analytics />
+        <SpeedInsights />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
