@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState, useTransition, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import type { Product, Category, Manufacturer } from '@/lib/types';
@@ -30,6 +30,8 @@ export interface ProductsClientPageProps {
   categories: Category[];
   hdfCategory: Category | null;
   hdfCountries: Category[];
+  futecCategory: Category | null;
+  futecCollections: Category[];
   manufacturers: Manufacturer[];
   pagination?: {
     page: number;
@@ -38,7 +40,7 @@ export interface ProductsClientPageProps {
   };
 }
 
-export function ProductsClientPage({ products, categories, hdfCategory, hdfCountries, manufacturers, pagination }: ProductsClientPageProps) {
+export function ProductsClientPage({ products, categories, hdfCategory, hdfCountries, futecCategory, futecCollections, manufacturers, pagination }: ProductsClientPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -74,6 +76,16 @@ export function ProductsClientPage({ products, categories, hdfCategory, hdfCount
     const queryString = params.toString();
     router.push(queryString ? `/admin/products?${queryString}` : '/admin/products');
   };
+
+  const topLevelCategories = useMemo(() => categories.filter((cat) => !cat.parent_id), [categories]);
+
+  const normalizedSelectedCategory = useMemo(() => {
+    if (selectedCategory === 'all') return 'all';
+    if (topLevelCategories.some((cat) => cat.id === selectedCategory)) return selectedCategory;
+    if (hdfCategory && hdfCountries.some((country) => country.id === selectedCategory)) return hdfCategory.id;
+    if (futecCategory && futecCollections.some((collection) => collection.id === selectedCategory)) return futecCategory.id;
+    return 'all';
+  }, [selectedCategory, topLevelCategories, hdfCategory, hdfCountries, futecCategory, futecCollections]);
 
   const handleCategoryChange = (value: string) => {
     updateQueryParams({
@@ -223,13 +235,13 @@ export function ProductsClientPage({ products, categories, hdfCategory, hdfCount
         <Button variant="outline" type="button" onClick={handleSearchSubmit}>
           بحث
         </Button>
-        <Select value={selectedCategory} onValueChange={handleCategoryChange}>
+        <Select value={normalizedSelectedCategory} onValueChange={handleCategoryChange}>
           <SelectTrigger className="w-full sm:w-[200px] bg-muted/40 focus:bg-background">
             <SelectValue placeholder="فلترة حسب الفئة" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">جميع الفئات</SelectItem>
-            {categories.map((cat) => (
+            {topLevelCategories.map((cat) => (
               <SelectItem key={cat.id} value={cat.id}>{cat.name_ar || cat.name}</SelectItem>
             ))}
           </SelectContent>
@@ -310,6 +322,8 @@ export function ProductsClientPage({ products, categories, hdfCategory, hdfCount
             hdfCategory={hdfCategory}
             hdfCountries={hdfCountries}
             manufacturers={manufacturers}
+            futecCategory={futecCategory}
+            futecCollections={futecCollections}
           />
           <DialogFooter className="flex-shrink-0 pt-4 border-t">
             <DialogClose asChild>

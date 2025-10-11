@@ -64,7 +64,23 @@ export async function saveProduct(prevState: any, formData: FormData) {
     }
 
     console.log('--- VALIDATION SUCCEEDED ---');
-    const { id: validatedId, ...productData } = validatedFields.data;
+    const { id: validatedId, ...productDataRaw } = validatedFields.data;
+
+    const productData = {
+      ...productDataRaw,
+      manufacturer_id: productDataRaw.manufacturer_id && productDataRaw.manufacturer_id !== ''
+        ? productDataRaw.manufacturer_id
+        : null,
+    };
+
+    if (!productData.category_id) {
+      console.error('Missing category_id during product save.');
+      return {
+        success: false,
+        message: 'Please select a valid category for the product before saving.',
+      };
+    }
+
     console.log('Data to be saved to DB:', productData);
 
     let error;

@@ -1,10 +1,13 @@
 import { CategoryPage } from "@/components/category-page"
 import { HdfCountryShowcase } from "@/components/hdf/HdfCountryShowcase"
+import { FutecCategoryShowcase } from "@/components/futec/FutecCategoryShowcase"
 import { 
   getCachedCategoryBySlug, 
   getCachedProductsByCategorySlug, 
   getAllCategorySlugs, 
   getHdfCountries,
+  getFutecSubcategories,
+  getFutecProductsBySubcategory,
 } from "@/lib/supabase" // استيراد الدوال من الملف المركزي
 import { notFound } from "next/navigation"
 import type { Metadata } from 'next'
@@ -55,6 +58,20 @@ export default async function Page({ params }: CategoryPageProps) {
   if (slug === "hdf") {
     const countries = await getHdfCountries()
     return <HdfCountryShowcase countries={countries} />
+  }
+
+  if (slug === "futec") {
+    const [subcategories, productsBySubcategory] = await Promise.all([
+      getFutecSubcategories(),
+      getFutecProductsBySubcategory(),
+    ])
+    return (
+      <FutecCategoryShowcase
+        category={category}
+        subcategories={subcategories}
+        productsBySubcategory={productsBySubcategory}
+      />
+    )
   }
 
   const products = await getCachedProductsByCategorySlug(slug)

@@ -30,9 +30,21 @@ interface ProductFormProps {
   hdfCategory?: Category | null;
   hdfCountries?: Category[];
   manufacturers?: Manufacturer[];
+  futecCategory?: Category | null;
+  futecCollections?: Category[];
 }
 
-export function ProductForm({ product, categories, onSubmit, isPending, hdfCategory, hdfCountries = [], manufacturers = [] }: ProductFormProps) {
+export function ProductForm({
+  product,
+  categories,
+  onSubmit,
+  isPending,
+  hdfCategory,
+  hdfCountries = [],
+  manufacturers = [],
+  futecCategory,
+  futecCollections = [],
+}: ProductFormProps) {
   // To prevent type errors between nullable DB values and non-nullable form fields,
   // we sanitize the product data, converting nulls to empty strings or default values.
   const sanitizedDefaultValues = {
@@ -162,6 +174,40 @@ export function ProductForm({ product, categories, onSubmit, isPending, hdfCateg
     return manufacturerOptions.find((manufacturer) => manufacturer.id === selectedManufacturerId) || null;
   }, [selectedManufacturerId, manufacturerOptions]);
 
+  const categoriesForSelect = useMemo(() => {
+    return categories.filter((category) => !category.parent_id || category.id === selectedCategoryId);
+  }, [categories, selectedCategoryId]);
+
+  const topLevelCategoryValue = useMemo(() => {
+    if (!selectedCategoryId) return '';
+    if (futecCategory && futecCollections.some((collection) => collection.id === selectedCategoryId)) {
+      return futecCategory.id;
+    }
+    return selectedCategoryId;
+  }, [selectedCategoryId, futecCategory, futecCollections]);
+
+  const handlePrimaryCategoryChange = (value: string) => {
+    if (futecCategory && value === futecCategory.id) {
+      setValue('category_id', futecCategory.id);
+    } else {
+      setValue('category_id', value);
+    }
+  };
+
+  const isFutecFlowActive = Boolean(futecCategory && topLevelCategoryValue === futecCategory.id);
+  const futecSubcategoryOptions = useMemo(() => {
+    if (!futecCollections.length) return [];
+    return futecCollections.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  }, [futecCollections]);
+
+  const futecSelectedSubcategoryId = useMemo(() => {
+    if (!selectedCategoryId) return '';
+    if (futecCollections.some((collection) => collection.id === selectedCategoryId)) {
+      return selectedCategoryId;
+    }
+    return '';
+  }, [selectedCategoryId, futecCollections]);
+
   return (
     <Form {...form}>
       <form id="product-form" onSubmit={handleSubmit(onSubmit, (errors) => { console.error('Client-side validation errors:', errors); })} className="flex-grow overflow-hidden flex flex-col">
@@ -188,30 +234,26 @@ export function ProductForm({ product, categories, onSubmit, isPending, hdfCateg
                 <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>Price</FormLabel><FormControl><Input type="number" placeholder="99.99" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="sale_price" render={({ field }) => (<FormItem><FormLabel>Sale Price</FormLabel><FormControl><Input type="number" placeholder="129.99" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
               </div>
-              <FormField
-                control={form.control}
-                name="category_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category <span className="text-red-500">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormItem>
+                <FormLabel>Category <span className="text-red-500">*</span></FormLabel>
+                <Select onValueChange={handlePrimaryCategoryChange} value={topLevelCategoryValue}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {categoriesForSelect.map((categoryOption) => (
+                      <SelectItem key={categoryOption.id} value={categoryOption.id}>
+                        {categoryOption.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
 
-              {hdfCategory && selectedCategoryId === hdfCategory.id ? (
+              {hdfCategory && topLevelCategoryValue === hdfCategory.id ? (
                 <FormField
                   control={form.control}
                   name="manufacturer_id"
@@ -254,6 +296,32 @@ export function ProductForm({ product, categories, onSubmit, isPending, hdfCateg
                     );
                   }}
                 />
+              ) : null}
+
+              {isFutecFlowActive && futecSubcategoryOptions.length ? (
+                <FormItem>
+                  <FormLabel>{'اختر مجموعة Futec'}</FormLabel>
+                  <Select
+                    onValueChange={(value) => setValue('category_id', value)}
+                    value={futecSelectedSubcategoryId}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر المجموعة الفرعية" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {futecSubcategoryOptions.map((collection) => (
+                        <SelectItem key={collection.id} value={collection.id}>
+                          {collection.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {'قم باختيار المجموعة الفرعية التي ينتمي إليها المنتج ضمن Futec.'}
+                  </p>
+                </FormItem>
               ) : null}
               <FormField control={form.control} name="stock_quantity" render={({ field }) => (<FormItem><FormLabel>Stock Quantity</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -167,7 +167,10 @@ export function Categories() {
         {/*           هنا يبدأ التعديل الرئيسي لشكل البطاقات          */}
         {/* ======================================================== */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
-          {categories.slice(0, visibleCount).map((category, index) => {
+          {categories
+            .filter((category) => !category.parent_id)
+            .slice(0, visibleCount)
+            .map((category) => {
             const IconComponent = categoryIcons[category.slug as keyof typeof categoryIcons] || MoreHorizontal
             return (
               <div

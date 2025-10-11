@@ -66,9 +66,12 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
 
   let hdfCategory: Category | null = null;
   let hdfCountries: Category[] = [];
+  let futecCategory: Category | null = null;
+  let futecCollections: Category[] = [];
 
   if (categoriesData) {
     hdfCategory = (categoriesData as Category[]).find((cat) => cat.slug === 'hdf') ?? null;
+    futecCategory = (categoriesData as Category[]).find((cat) => cat.slug === 'futec') ?? null;
 
     if (hdfCategory) {
       const { data: countriesData, error: countriesError } = await supabase
@@ -82,6 +85,21 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
         console.error('Error loading HDF countries:', countriesError);
       } else {
         hdfCountries = (countriesData as Category[]) ?? [];
+      }
+    }
+
+    if (futecCategory) {
+      const { data: collectionsData, error: collectionsError } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('parent_id', futecCategory.id)
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (collectionsError) {
+        console.error('Error loading Futec collections:', collectionsError);
+      } else {
+        futecCollections = (collectionsData as Category[]) ?? [];
       }
     }
   }
@@ -103,6 +121,8 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
       categories={(categoriesData as Category[]) || []}
       hdfCategory={hdfCategory}
       hdfCountries={hdfCountries}
+      futecCategory={futecCategory}
+      futecCollections={futecCollections}
       manufacturers={(manufacturersData as Manufacturer[]) || []}
       pagination={{
         page: currentPage,

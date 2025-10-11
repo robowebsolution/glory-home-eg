@@ -138,6 +138,76 @@ export const getHdfCountries = async (): Promise<Category[]> => {
   return data || []
 };
 
+export const getFutecProductsBySubcategory = async (): Promise<Record<string, Product[]>> => {
+  const subcategories = await getFutecSubcategories();
+  if (subcategories.length === 0) {
+    return {};
+  }
+
+  const categoryIds = subcategories.map((category) => category.id);
+
+  const { data, error } = await supabase
+    .from('products')
+    .select('*, categories(*)')
+    .in('category_id', categoryIds)
+    .eq('in_stock', true)
+    .order('featured', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching Futec products:', error.message);
+    return {};
+  }
+
+  const productsByCategory: Record<string, Product[]> = {};
+
+  for (const subcategory of subcategories) {
+    productsByCategory[subcategory.slug] = [];
+  }
+
+  for (const product of data || []) {
+    if (!product.category_id) continue;
+    const match = subcategories.find((category) => category.id === product.category_id);
+    if (!match) continue;
+    if (!productsByCategory[match.slug]) {
+      productsByCategory[match.slug] = [];
+    }
+    productsByCategory[match.slug].push(product as Product);
+  }
+
+  return productsByCategory;
+};
+
+export const getFutecCategory = async (): Promise<Category | null> => {
+  return getCachedCategoryBySlug('futec');
+};
+
+export const getFutecSubcategories = async (): Promise<Category[]> => {
+  const futecCategory = await getFutecCategory();
+  if (!futecCategory) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .eq('parent_id', futecCategory.id)
+    .order('sort_order', { ascending: true })
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching Futec subcategories:', error.message);
+    return [];
+  }
+
+  return data || [];
+};
+
+export const getFutecSubcategorySlugs = async (): Promise<string[]> => {
+  const subcategories = await getFutecSubcategories();
+  return subcategories.map((category) => category.slug);
+};
+
 export const getHdfCountrySlugs = async (): Promise<string[]> => {
   const countries = await getHdfCountries()
   return countries.map((country) => country.slug)

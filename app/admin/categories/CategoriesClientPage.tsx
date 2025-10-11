@@ -32,7 +32,9 @@ export function CategoriesClientPage({ categories }: CategoriesClientPageProps) 
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredCategories = useMemo(() => {
-    return categories.filter(category =>
+    return categories
+      .filter(category => !category.parent_id)
+      .filter(category =>
       category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       category.name_ar.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -131,7 +133,7 @@ export function CategoriesClientPage({ categories }: CategoriesClientPageProps) 
           <CategoryForm 
             key={selectedCategory?.id || 'new-category'}
             category={selectedCategory}
-            allCategories={categories}
+            allCategories={categories.filter((category) => !category.parent_id)}
             onSubmit={handleFormSubmit}
             isPending={isPending}
             onClose={() => setIsFormOpen(false)}

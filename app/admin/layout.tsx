@@ -36,6 +36,7 @@ const navigation = [
   { name: "المنتجات", href: "/admin/products", icon: Package },
   { name: "الفئات", href: "/admin/categories", icon: FolderOpen },
   { name: "إدارة HDF", href: "/admin/hdf", icon: Globe2 },
+  { name: "إدارة Futec", href: "/admin/futec", icon: Globe2 },
   { name: "المشاريع", href: "/admin/projects", icon: FolderOpen },
   { name: "فئات المشاريع", href: "/admin/project-categories", icon: FolderOpen },
   { name: "عملاؤنا", href: "/admin/customers", icon: Image },
