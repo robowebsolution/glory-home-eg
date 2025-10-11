@@ -10,10 +10,25 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { 
-   Share2, Star, Shield, Truck, RotateCcw, Award, Play, ChevronLeft, ChevronRight, Eye, Info, Package, Zap, X,
+import {
+  Share2,
+  Star,
+  Shield,
+  Truck,
+  RotateCcw,
+  Award,
+  Play,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Info,
+  Package,
+  Zap,
+  X,
   Phone,
-  Clock
+  Clock,
+  Building2,
+  Globe2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Navigation } from "@/components/navigation";
@@ -136,6 +151,14 @@ export const ProductClientPage: FC<ProductClientPageProps> = ({ product }) => {
   const discountPercentage = isSale
     ? Math.round(((originalPrice - salePrice) / originalPrice) * 100)
     : 0;
+
+  const manufacturerName = product.manufacturer
+    ? (language === "ar" && product.manufacturer.name_ar ? product.manufacturer.name_ar : product.manufacturer.name)
+    : null;
+  const manufacturerCountryName = product.manufacturer?.country
+    ? (language === "ar" && product.manufacturer.country.name_ar ? product.manufacturer.country.name_ar : product.manufacturer.country.name)
+    : null;
+  const showManufacturerInfo = Boolean(product.manufacturer && (manufacturerName || manufacturerCountryName));
 
   /* const updateQuantity = (newQuantity: number) => {
     const min = product.min_order_quantity || 1;
@@ -529,6 +552,48 @@ export const ProductClientPage: FC<ProductClientPageProps> = ({ product }) => {
                       {new Intl.NumberFormat(language === "ar" ? "ar-EG" : "en-US", { style: "currency", currency: "EGP" }).format(originalPrice)}
                     </span>
                   )}
+                </div>
+              )}
+
+              {showManufacturerInfo && (
+                <div className="relative overflow-hidden rounded-2xl border border-gray-200/70 dark:border-gray-800/70 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-6 shadow-xl transition-all duration-500">
+                  <div className="pointer-events-none absolute -top-24 right-0 h-44 w-44 rounded-full bg-amber-300/40 blur-3xl dark:bg-amber-500/20" />
+                  <div className="pointer-events-none absolute bottom-0 left-0 h-32 w-32 rounded-full bg-amber-500/30 blur-3xl opacity-70 dark:bg-amber-400/20" />
+                  <div className="relative z-10 flex flex-col gap-6">
+                    <span className="inline-flex items-center gap-2 self-start rounded-full bg-black/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow-lg dark:bg-white/90 dark:text-gray-900">
+                      {language === 'ar' ? 'تفاصيل التصنيع' : 'Manufacturing'}
+                    </span>
+                    <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-black text-white shadow-lg dark:bg-white dark:text-gray-900">
+                          <Building2 className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                            {language === 'ar' ? 'الشركة المصنعة' : 'Manufacturer'}
+                          </p>
+                          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {manufacturerName || product.manufacturer?.name || (language === 'ar' ? 'غير متوفر' : 'Not specified')}
+                          </p>
+                        </div>
+                      </div>
+                      {manufacturerCountryName && (
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-black text-white shadow-lg dark:bg-white dark:text-gray-900">
+                            <Globe2 className="h-6 w-6" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                              {language === 'ar' ? 'الدولة المصنعة' : 'Country of origin'}
+                            </p>
+                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                              {manufacturerCountryName}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 

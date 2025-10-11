@@ -1,8 +1,10 @@
 import { CategoryPage } from "@/components/category-page"
+import { HdfCountryShowcase } from "@/components/hdf/HdfCountryShowcase"
 import { 
   getCachedCategoryBySlug, 
   getCachedProductsByCategorySlug, 
-  getAllCategorySlugs 
+  getAllCategorySlugs, 
+  getHdfCountries,
 } from "@/lib/supabase" // استيراد الدوال من الملف المركزي
 import { notFound } from "next/navigation"
 import type { Metadata } from 'next'
@@ -43,16 +45,19 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 export default async function Page({ params }: CategoryPageProps) {
   const { slug } = await params
 
-  // استخدام Promise.all لجلب البيانات على التوازي لتحسين الأداء
-  const [category, products] = await Promise.all([
-    getCachedCategoryBySlug(slug),
-    getCachedProductsByCategorySlug(slug)
-  ]);
+  const category = await getCachedCategoryBySlug(slug)
 
   // إذا لم يتم العثور على الفئة، يتم عرض صفحة 404
   if (!category) {
     notFound()
   }
+
+  if (slug === "hdf") {
+    const countries = await getHdfCountries()
+    return <HdfCountryShowcase countries={countries} />
+  }
+
+  const products = await getCachedProductsByCategorySlug(slug)
 
   // تمرير البيانات للمكون العميل الذي سيعرضها
   return <CategoryPage category={category} products={products} />

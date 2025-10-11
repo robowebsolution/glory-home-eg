@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition, useMemo } from 'react';
+import { useEffect, useState, useTransition } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import type { Product, Category } from '@/lib/types';
+import type { Product, Category, Manufacturer } from '@/lib/types';
 import { deleteProduct, saveProduct } from './actions';
 import type { ProductFormData } from '@/lib/schemas';
 
@@ -22,29 +23,77 @@ import { ProductForm } from '@/components/admin/products/ProductForm';
 import { ProductCard } from '@/components/admin/products/ProductCard';
 import { PlusCircle, Search } from 'lucide-react';
 
-
 type ProductWithCategory = Product & { categories: Pick<Category, 'name' | 'name_ar'> | null };
 
-interface ProductsClientPageProps {
+export interface ProductsClientPageProps {
   products: ProductWithCategory[];
   categories: Category[];
+  hdfCategory: Category | null;
+  hdfCountries: Category[];
+  manufacturers: Manufacturer[];
+  pagination?: {
+    page: number;
+    pageSize: number;
+    totalCount: number;
+  };
 }
 
-export function ProductsClientPage({ products, categories }: ProductsClientPageProps) {
-  const [isPending, startTransition] = useTransition();
+export function ProductsClientPage({ products, categories, hdfCategory, hdfCountries, manufacturers, pagination }: ProductsClientPageProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [isProductPending, startProductTransition] = useTransition();
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const selectedCategory = searchParams?.get('category') ?? 'all';
+  const searchParamValue = searchParams?.get('query') ?? '';
 
-  const filteredProducts = useMemo(() => {
-    return products.filter(product => {
-      const matchesCategory = selectedCategory === 'all' || product.category_id === selectedCategory;
-      const matchesSearch = (product.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            (product.name_ar || '').toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesCategory && matchesSearch;
+  const [searchValue, setSearchValue] = useState(searchParamValue);
+
+  useEffect(() => {
+    setSearchValue(searchParamValue);
+  }, [searchParamValue]);
+
+  const currentPage = pagination?.page ?? 1;
+  const pageSize = pagination?.pageSize ?? products.length;
+  const totalCount = pagination?.totalCount ?? products.length;
+  const totalPages = Math.max(Math.ceil(totalCount / Math.max(pageSize, 1)), 1);
+
+  const updateQueryParams = (updates: Record<string, string | null | undefined>) => {
+    const params = new URLSearchParams(searchParams ? searchParams.toString() : '');
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
     });
-  }, [products, searchTerm, selectedCategory]);
+
+    const queryString = params.toString();
+    router.push(queryString ? `/admin/products?${queryString}` : '/admin/products');
+  };
+
+  const handleCategoryChange = (value: string) => {
+    updateQueryParams({
+      category: value === 'all' ? null : value,
+      page: '1',
+    });
+  };
+
+  const handleSearchSubmit = () => {
+    const term = searchValue.trim();
+    updateQueryParams({
+      query: term.length ? term : null,
+      page: '1',
+    });
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page === currentPage) return;
+    updateQueryParams({ page: String(page) });
+  };
 
   const handleAddProduct = () => {
     setSelectedProduct(null);
@@ -57,7 +106,7 @@ export function ProductsClientPage({ products, categories }: ProductsClientPageP
   };
 
   const handleFormSubmit = (data: ProductFormData) => {
-    startTransition(() => {
+    startProductTransition(() => {
       (async () => {
         try {
           const formData = new FormData();
@@ -111,6 +160,7 @@ export function ProductsClientPage({ products, categories }: ProductsClientPageP
           if (result.success) {
             toast.success(result.message);
             setIsFormOpen(false);
+            router.refresh();
           } else {
             toast.error(result.message);
           }
@@ -123,12 +173,13 @@ export function ProductsClientPage({ products, categories }: ProductsClientPageP
 
   const handleDeleteProduct = (productId: string) => {
     if (confirm('Are you sure you want to delete this product?')) {
-      startTransition(() => {
+      startProductTransition(() => {
         (async () => {
           try {
             const result = await deleteProduct(productId);
             if (result.success) {
               toast.success(result.message);
+              router.refresh();
             } else {
               toast.error(result.message);
             }
@@ -148,44 +199,51 @@ export function ProductsClientPage({ products, categories }: ProductsClientPageP
           <p className="text-muted-foreground">إدارة جميع منتجات متجرك.</p>
         </div>
         <Button onClick={handleAddProduct}>
-          <PlusCircle className="mr-2 h-4 w-4" /> 
+          <PlusCircle className="mr-2 h-4 w-4" />
           إضافة منتج
         </Button>
       </header>
 
-      {/* Filters */}
       <div className="flex items-center gap-4 flex-wrap pb-4 border-b border-border">
         <div className="relative flex-grow sm:flex-grow-0 sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input 
+          <Input
             placeholder="البحث باسم المنتج..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                handleSearchSubmit();
+              }
+            }}
             className="pl-10 bg-muted/40 focus:bg-background"
           />
         </div>
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+        <Button variant="outline" type="button" onClick={handleSearchSubmit}>
+          بحث
+        </Button>
+        <Select value={selectedCategory} onValueChange={handleCategoryChange}>
           <SelectTrigger className="w-full sm:w-[200px] bg-muted/40 focus:bg-background">
             <SelectValue placeholder="فلترة حسب الفئة" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">جميع الفئات</SelectItem>
-            {categories.map(cat => (
+            {categories.map((cat) => (
               <SelectItem key={cat.id} value={cat.id}>{cat.name_ar || cat.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {/* Products Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-12">
-        {filteredProducts.length > 0 ? (
-          filteredProducts.map(product => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              onEdit={handleEditProduct} 
-              onDelete={handleDeleteProduct} 
+        {products.length > 0 ? (
+          products.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onEdit={handleEditProduct}
+              onDelete={handleDeleteProduct}
             />
           ))
         ) : (
@@ -196,7 +254,46 @@ export function ProductsClientPage({ products, categories }: ProductsClientPageP
         )}
       </div>
 
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      {pagination && totalCount > pageSize ? (
+        <div className="flex items-center justify-between flex-wrap gap-4 border-t pt-4">
+          <p className="text-sm text-muted-foreground">
+            عرض {products.length ? (currentPage - 1) * pageSize + 1 : 0}
+            {' '}–{' '}
+            {Math.min(currentPage * pageSize, totalCount)} من {totalCount} منتج
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+            >
+              السابق
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              الصفحة {currentPage} من {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+            >
+              التالي
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Product Dialog */}
+      <Dialog open={isFormOpen} onOpenChange={(open) => {
+        if (open) {
+          setIsFormOpen(true);
+        } else {
+          setIsFormOpen(false);
+          setSelectedProduct(null);
+        }
+      }}>
         <DialogContent className="max-w-4xl h-[95vh] flex flex-col" scroll-lock-disabled="true">
           <DialogHeader>
             <DialogTitle>{selectedProduct ? 'تعديل المنتج' : 'إضافة منتج جديد'}</DialogTitle>
@@ -204,23 +301,28 @@ export function ProductsClientPage({ products, categories }: ProductsClientPageP
               املأ تفاصيل المنتج. انقر على "حفظ" عند الانتهاء.
             </DialogDescription>
           </DialogHeader>
-          <ProductForm 
+          <ProductForm
             key={selectedProduct?.id || 'new-product'}
             product={selectedProduct}
             categories={categories}
             onSubmit={handleFormSubmit}
-            isPending={isPending}
+            isPending={isProductPending}
+            hdfCategory={hdfCategory}
+            hdfCountries={hdfCountries}
+            manufacturers={manufacturers}
           />
           <DialogFooter className="flex-shrink-0 pt-4 border-t">
             <DialogClose asChild>
               <Button type="button" variant="outline">إلغاء</Button>
             </DialogClose>
-            <Button type="submit" form="product-form" disabled={isPending}>
-              {isPending ? 'جاري الحفظ...' : 'حفظ المنتج'}
+            <Button type="submit" form="product-form" disabled={isProductPending}>
+              {isProductPending ? 'جاري الحفظ...' : 'حفظ المنتج'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Country and Manufacturer dialogs removed; management now lives in /admin/hdf */}
     </div>
   );
 }

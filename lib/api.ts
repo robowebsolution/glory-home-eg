@@ -16,9 +16,10 @@ export async function fetchCategories() {
     const { data, error } = await supabase
       .from("categories")
       .select(
-        "id, name, name_ar, slug, description, description_ar, image_url, created_at, updated_at, products:products(count)"
+        "id, name, name_ar, slug, description, description_ar, image_url, created_at, updated_at, parent_id, sort_order, products:products(count)"
       )
       .eq("products.in_stock", true)
+      .order("sort_order", { ascending: true })
       .order("name")
 
     if (error) {
@@ -37,6 +38,8 @@ export async function fetchCategories() {
       image_url: c.image_url,
       created_at: c.created_at,
       updated_at: c.updated_at,
+      parent_id: c.parent_id,
+      sort_order: c.sort_order,
       product_count: c?.products?.[0]?.count ?? 0,
     }))
 
@@ -44,6 +47,44 @@ export async function fetchCategories() {
   } catch (error) {
     console.error("Error fetching categories:", error)
     console.error("Supabase config:", supabaseConfig)
+    return []
+  }
+}
+
+export async function fetchHdfCountries() {
+  try {
+    if (!isSupabaseConfigured() || !supabase) {
+      return []
+    }
+
+    const { data: hdfCategory, error: hdfCategoryError } = await supabase
+      .from("categories")
+      .select("id")
+      .eq("slug", "hdf")
+      .maybeSingle()
+
+    if (hdfCategoryError || !hdfCategory?.id) {
+      if (hdfCategoryError) {
+        console.error("Supabase error fetching HDF category:", hdfCategoryError)
+      }
+      return []
+    }
+
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, name, name_ar, slug")
+      .eq("parent_id", hdfCategory.id)
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true })
+
+    if (error) {
+      console.error("Supabase error fetching HDF countries:", error)
+      return []
+    }
+
+    return data || []
+  } catch (error) {
+    console.error("Error fetching HDF countries:", error)
     return []
   }
 }

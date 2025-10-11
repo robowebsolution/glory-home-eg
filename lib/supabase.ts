@@ -37,6 +37,7 @@ export interface Product {
   color_ar?: string;
   color_en?: string;
   warranty_period?: string;
+  manufacturer?: Manufacturer | null;
 }
 
 export interface Category {
@@ -50,6 +51,25 @@ export interface Category {
   image_url: string;
   created_at: string;
   updated_at: string;
+  parent_id?: string | null;
+  sort_order?: number | null;
+}
+
+export interface Manufacturer {
+  id: string;
+  name: string;
+  name_ar?: string;
+  slug: string;
+  country_category_id: string | null;
+  description?: string | null;
+  description_ar?: string | null;
+  logo_url?: string | null;
+  banner_image?: string | null;
+  sort_order?: number | null;
+  is_featured?: boolean | null;
+  created_at: string;
+  updated_at: string;
+  country?: Category | null;
 }
 
 export interface Profile {
@@ -97,12 +117,108 @@ export const getCachedCategories = cache(async (): Promise<Category[]> => {
   return data || []
 })
 
+export const getHdfCountries = cache(async (): Promise<Category[]> => {
+  const hdfCategory = await getCachedCategoryBySlug('hdf')
+  if (!hdfCategory) {
+    return []
+  }
+
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .eq('parent_id', hdfCategory.id)
+    .order('sort_order', { ascending: true })
+    .order('name', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching HDF countries:', error.message)
+    return []
+  }
+
+  return data || []
+})
+
+export const getHdfCountrySlugs = cache(async (): Promise<string[]> => {
+  const countries = await getHdfCountries()
+  return countries.map((country) => country.slug)
+})
+
+export const getManufacturersByCountrySlug = cache(async (countrySlug: string): Promise<Manufacturer[]> => {
+  if (!countrySlug) return []
+
+  const country = await getCachedCategoryBySlug(countrySlug)
+  if (!country) {
+    return []
+  }
+
+  const { data, error } = await supabase
+    .from('manufacturers')
+    .select('*')
+    .eq('country_category_id', country.id)
+    .order('sort_order', { ascending: true })
+    .order('name', { ascending: true })
+
+  if (error) {
+    console.error(`Error fetching manufacturers for country "${countrySlug}":`, error.message)
+    return []
+  }
+
+  return data || []
+})
+
+export const getManufacturerBySlug = cache(async (manufacturerSlug: string): Promise<Manufacturer | null> => {
+  if (!manufacturerSlug) return null
+
+  const { data, error } = await supabase
+    .from('manufacturers')
+    .select('*')
+    .eq('slug', manufacturerSlug)
+    .maybeSingle()
+
+  if (error) {
+    if (error.code !== 'PGRST116') {
+      console.error(`Error fetching manufacturer "${manufacturerSlug}":`, error.message)
+    }
+    return null
+  }
+
+  return data ?? null
+})
+
+export const getManufacturerSlugsByCountry = cache(async (countrySlug: string): Promise<string[]> => {
+  const manufacturers = await getManufacturersByCountrySlug(countrySlug)
+  return manufacturers.map((manufacturer) => manufacturer.slug)
+})
+
+export const getProductsByManufacturerSlug = cache(async (manufacturerSlug: string): Promise<Product[]> => {
+  if (!manufacturerSlug) return []
+
+  const manufacturer = await getManufacturerBySlug(manufacturerSlug)
+  if (!manufacturer) {
+    return []
+  }
+
+  const { data, error } = await supabase
+    .from('products')
+    .select('*, categories(*)')
+    .eq('manufacturer_id', manufacturer.id)
+    .order('featured', { ascending: false })
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error(`Error fetching products for manufacturer "${manufacturerSlug}":`, error.message)
+    return []
+  }
+
+  return data || []
+})
+
 export const getCachedProductById = cache(async (id: string): Promise<Product | null> => {
   if (!id) return null;
 
   const { data, error } = await supabase
     .from('products')
-    .select('*, categories(*)')
+    .select('*, categories(*), manufacturer:manufacturers(*, country:categories(*))')
     .eq('id', id)
     .single();
 

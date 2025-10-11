@@ -11,9 +11,16 @@ import { useLanguage } from "@/lib/language-context"
 import Link from "next/link"
 import { useTheme } from "next-themes"
 import Image from "next/image"
-import { fetchCategories } from "@/lib/api"
+import { fetchCategories, fetchHdfCountries } from "@/lib/api"
 
-type NavCategory = { id: string; slug: string; name: string; name_ar?: string | null }
+type NavCategory = {
+  id: string;
+  slug: string;
+  name: string;
+  name_ar?: string | null;
+  parent_id?: string | null;
+  sort_order?: number | null;
+}
 
 export const Navigation: FC = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -38,13 +45,27 @@ export const Navigation: FC = () => {
   useEffect(() => {
     let active = true
     ;(async () => {
-      const cats = await fetchCategories()
+      const [cats, hdfCountries] = await Promise.all([
+        fetchCategories(),
+        fetchHdfCountries(),
+      ])
       if (active && Array.isArray(cats)) {
+        const hdfCountryIds = new Set(
+          Array.isArray(hdfCountries) ? hdfCountries.map((country: any) => country?.id).filter(Boolean) : []
+        )
         // Only keep fields we need for nav
         const mapped = cats
           .filter((c: any) => c && c.slug && c.name)
+          .filter((c: any) => !hdfCountryIds.has(c.id) && (!c.parent_id || c.slug === 'hdf'))
           .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-          .map((c: any) => ({ id: c.id, slug: c.slug, name: c.name, name_ar: c.name_ar }))
+          .map((c: any) => ({
+            id: c.id,
+            slug: c.slug,
+            name: c.name,
+            name_ar: c.name_ar,
+            parent_id: c.parent_id,
+            sort_order: c.sort_order,
+          }))
         setNavCategories(mapped)
       }
     })()

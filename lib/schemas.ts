@@ -30,6 +30,7 @@ export const productSchema = z.object({
   in_stock: booleanFromString.default(true), // Renamed from is_active
   featured: booleanFromString.default(false), // Renamed from is_featured
   category_id: z.string().uuid('A valid category must be selected.').optional().nullable(),
+  manufacturer_id: z.string().uuid().optional().nullable().or(z.literal('')),
   
   // SEO Fields
   meta_title_en: z.string().optional().nullable(),

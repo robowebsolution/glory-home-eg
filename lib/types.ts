@@ -4,6 +4,34 @@ export interface Category {
   id: string; // uuid
   name: string;
   name_ar: string;
+  slug?: string;
+  description?: string | null;
+  description_ar?: string | null;
+  image_url?: string | null;
+  banner_image?: string | null;
+  icon_name?: string | null;
+  product_count?: number | null;
+  sort_order?: number | null;
+  is_featured?: boolean | null;
+  parent_id?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface Manufacturer {
+  id: string;
+  name: string;
+  name_ar?: string | null;
+  slug: string;
+  country_category_id: string | null;
+  description?: string | null;
+  description_ar?: string | null;
+  logo_url?: string | null;
+  banner_image?: string | null;
+  sort_order?: number | null;
+  is_featured?: boolean | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface Product {
@@ -43,6 +71,7 @@ export interface Product {
   max_order_quantity?: number | null; 
   main_image?: string | null; 
   gallery_images?: string[] | null;
+  manufacturer_id?: string | null;
 }
 
 export interface ContactMessage {

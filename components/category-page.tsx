@@ -1,12 +1,13 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { ProductCard } from "@/components/product-card"
 import { Button } from "@/components/ui/button"
-import { Filter, Grid, List } from "lucide-react"
-import { useState } from "react"
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink } from "@/components/ui/pagination"
+import { Filter, Grid, List, ChevronLeft, ChevronRight } from "lucide-react"
+import { useMemo, useState, useEffect } from "react"
 import type { Product, Category } from "@/lib/supabase"
 import { useLanguage } from "@/lib/language-context"
 
@@ -19,11 +20,9 @@ export function CategoryPage({ category, products }: CategoryPageProps) {
   const { language } = useLanguage()
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [sortBy, setSortBy] = useState<"name" | "price" | "newest">("newest")
-  const [filteredProducts, setFilteredProducts] = useState(products)
-
-  const sortProducts = (products: Product[], sortBy: string) => {
-    const sorted = [...products]
-    switch (sortBy) {
+  function sortProducts(list: Product[], sortKey: string) {
+    const sorted = [...list]
+    switch (sortKey) {
       case "name":
         return sorted.sort((a, b) => a.name.localeCompare(b.name))
       case "price":
@@ -35,9 +34,57 @@ export function CategoryPage({ category, products }: CategoryPageProps) {
     }
   }
 
+  const [filteredProducts, setFilteredProducts] = useState(() => sortProducts(products, "newest"))
+  const [currentPage, setCurrentPage] = useState(1)
+  const PRODUCTS_PER_PAGE = 20
+
   const handleSortChange = (newSortBy: "name" | "price" | "newest") => {
     setSortBy(newSortBy)
-    setFilteredProducts(sortProducts(filteredProducts, newSortBy))
+  }
+
+  useEffect(() => {
+    setFilteredProducts(sortProducts(products, sortBy))
+    setCurrentPage(1)
+  }, [products, sortBy])
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE))
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE
+    return filteredProducts.slice(startIndex, startIndex + PRODUCTS_PER_PAGE)
+  }, [filteredProducts, currentPage])
+
+  const paginationItems = useMemo(() => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1)
+    }
+    const items: (number | "start-ellipsis" | "end-ellipsis")[] = [1]
+    const start = Math.max(2, currentPage - 1)
+    const end = Math.min(totalPages - 1, currentPage + 1)
+    if (start > 2) {
+      items.push("start-ellipsis")
+    }
+    for (let page = start; page <= end; page += 1) {
+      items.push(page)
+    }
+    if (end < totalPages - 1) {
+      items.push("end-ellipsis")
+    }
+    items.push(totalPages)
+    return items
+  }, [totalPages, currentPage])
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
   }
 
   return (
@@ -142,27 +189,90 @@ export function CategoryPage({ category, products }: CategoryPageProps) {
               <p className="text-gray-600">Check back soon for new arrivals in this category.</p>
             </div>
           ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6 }}
-              className={
-                viewMode === "grid"
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
-                  : "space-y-6"
-              }
-            >
-              {filteredProducts.map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                >
-                  <ProductCard product={product} viewMode={viewMode} />
-                </motion.div>
-              ))}
-            </motion.div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${viewMode}-${currentPage}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4 }}
+                className={
+                  viewMode === "grid"
+                    ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+                    : "space-y-6"
+                }
+              >
+                {paginatedProducts.map((product, index) => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 40 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.07 }}
+                  >
+                    <ProductCard product={product} viewMode={viewMode} />
+                  </motion.div>
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          )}
+          {filteredProducts.length > PRODUCTS_PER_PAGE && (
+            <div className="mt-12">
+              <Pagination className="w-full justify-center">
+                <PaginationContent className="flex-wrap gap-2">
+                  <PaginationItem>
+                    <PaginationLink
+                      href="#"
+                      size="default"
+                      onClick={(event) => {
+                        event.preventDefault()
+                        if (currentPage > 1) {
+                          handlePageChange(currentPage - 1)
+                        }
+                      }}
+                      className={`gap-2 px-4 py-2 rounded-full ${currentPage === 1 ? "pointer-events-none opacity-50" : ""}`}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      {language === "ar" ? "السابق" : "Previous"}
+                    </PaginationLink>
+                  </PaginationItem>
+                  {paginationItems.map((item, index) => (
+                    <PaginationItem key={`${item}-${index}`}>
+                      {item === "start-ellipsis" || item === "end-ellipsis" ? (
+                        <PaginationEllipsis />
+                      ) : (
+                        <PaginationLink
+                          href="#"
+                          onClick={(event) => {
+                            event.preventDefault()
+                            handlePageChange(item as number)
+                          }}
+                          isActive={currentPage === item}
+                          className={`px-4 py-2 rounded-full ${currentPage === item ? "" : "bg-transparent"}`}
+                        >
+                          {item}
+                        </PaginationLink>
+                      )}
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationLink
+                      href="#"
+                      size="default"
+                      onClick={(event) => {
+                        event.preventDefault()
+                        if (currentPage < totalPages) {
+                          handlePageChange(currentPage + 1)
+                        }
+                      }}
+                      className={`gap-2 px-4 py-2 rounded-full ${currentPage === totalPages ? "pointer-events-none opacity-50" : ""}`}
+                    >
+                      {language === "ar" ? "التالي" : "Next"}
+                      <ChevronRight className="h-4 w-4" />
+                    </PaginationLink>
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
           )}
         </div>
       </section>

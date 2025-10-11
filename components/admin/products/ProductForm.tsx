@@ -1,12 +1,13 @@
 "use client";
-import { useEffect, useState, useTransition, useRef } from 'react';
+
+import { useEffect, useState, useTransition, useRef, useMemo } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { saveProduct } from '@/app/admin/products/actions';
-import type { Product, Category } from '@/lib/types';
+import type { Product, Category, Manufacturer } from '@/lib/types';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,9 +27,12 @@ interface ProductFormProps {
   categories: Category[];
   onSubmit: (data: ProductFormData) => void;
   isPending: boolean;
+  hdfCategory?: Category | null;
+  hdfCountries?: Category[];
+  manufacturers?: Manufacturer[];
 }
 
-export function ProductForm({ product, categories, onSubmit, isPending }: ProductFormProps) {
+export function ProductForm({ product, categories, onSubmit, isPending, hdfCategory, hdfCountries = [], manufacturers = [] }: ProductFormProps) {
   // To prevent type errors between nullable DB values and non-nullable form fields,
   // we sanitize the product data, converting nulls to empty strings or default values.
   const sanitizedDefaultValues = {
@@ -47,6 +51,7 @@ export function ProductForm({ product, categories, onSubmit, isPending }: Produc
     tags_en: product?.tags_en ?? [],
     tags_ar: product?.tags_ar ?? [],
     gallery_images: product?.gallery_images?.map(url => ({ value: url })) ?? [],
+    manufacturer_id: product?.manufacturer_id ?? '',
   };
 
   const form = useForm<ProductFormData>({
@@ -125,6 +130,38 @@ export function ProductForm({ product, categories, onSubmit, isPending }: Produc
     setGalleryUrlInput('');
   };
 
+  const selectedCategoryId = watch('category_id');
+  const selectedManufacturerId = watch('manufacturer_id');
+
+  useEffect(() => {
+    if (!hdfCategory) {
+      setValue('manufacturer_id', '');
+      return;
+    }
+
+    if (selectedCategoryId && selectedCategoryId === hdfCategory.id) {
+      return;
+    }
+
+    setValue('manufacturer_id', '');
+  }, [selectedCategoryId, hdfCategory, setValue]);
+
+  const manufacturerOptions = useMemo(() => {
+    if (!manufacturers.length) return [];
+    return manufacturers.map((manufacturer) => {
+      const country = hdfCountries.find((country) => country.id === manufacturer.country_category_id);
+      return {
+        ...manufacturer,
+        countryLabel: country ? (country.name_ar || country.name) : undefined,
+      };
+    });
+  }, [manufacturers, hdfCountries]);
+
+  const selectedManufacturer = useMemo(() => {
+    if (!selectedManufacturerId) return null;
+    return manufacturerOptions.find((manufacturer) => manufacturer.id === selectedManufacturerId) || null;
+  }, [selectedManufacturerId, manufacturerOptions]);
+
   return (
     <Form {...form}>
       <form id="product-form" onSubmit={handleSubmit(onSubmit, (errors) => { console.error('Client-side validation errors:', errors); })} className="flex-grow overflow-hidden flex flex-col">
@@ -151,7 +188,73 @@ export function ProductForm({ product, categories, onSubmit, isPending }: Produc
                 <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>Price</FormLabel><FormControl><Input type="number" placeholder="99.99" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="sale_price" render={({ field }) => (<FormItem><FormLabel>Sale Price</FormLabel><FormControl><Input type="number" placeholder="129.99" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
               </div>
-              <FormField control={form.control} name="category_id" render={({ field }) => (<FormItem><FormLabel>Category <span className="text-red-500">*</span></FormLabel><Select onValueChange={field.onChange} defaultValue={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger></FormControl><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+              <FormField
+                control={form.control}
+                name="category_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category <span className="text-red-500">*</span></FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {hdfCategory && selectedCategoryId === hdfCategory.id ? (
+                <FormField
+                  control={form.control}
+                  name="manufacturer_id"
+                  render={({ field }) => {
+                    const normalizedValue = field.value ? field.value : 'none';
+                    return (
+                      <FormItem>
+                        <FormLabel>Manufacturer</FormLabel>
+                        <Select
+                          onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
+                          value={normalizedValue}
+                          disabled={!manufacturerOptions.length}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={manufacturerOptions.length ? 'اختر الشركة المصنعة' : 'لا توجد شركات متاحة'} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">بدون شركة</SelectItem>
+                            {manufacturerOptions.map((manufacturer) => (
+                              <SelectItem key={manufacturer.id} value={manufacturer.id}>
+                                {manufacturer.name_ar || manufacturer.name}
+                                {manufacturer.countryLabel ? ` — ${manufacturer.countryLabel}` : ''}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {selectedManufacturer ? (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {selectedManufacturer.countryLabel
+                              ? `${selectedManufacturer.countryLabel} • ${selectedManufacturer.name}`
+                              : selectedManufacturer.name}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground mt-2">اختر الشركة المصنعة المرتبطة بالمنتج.</p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+              ) : null}
               <FormField control={form.control} name="stock_quantity" render={({ field }) => (<FormItem><FormLabel>Stock Quantity</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField control={form.control} name="min_order_quantity" render={({ field }) => (<FormItem><FormLabel>Min Order Quantity</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
