@@ -3,13 +3,11 @@ import type { Metadata, Viewport } from "next"
 import { Raleway } from "next/font/google"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { ThemeProvider } from "@/components/theme-provider"
-
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
 import { AuthProvider } from "@/components/auth/auth-provider"
 import { LanguageProvider } from "@/lib/language-context"
 import { Toaster } from "sonner"
 import { Toaster as ShadToaster } from "@/components/ui/toaster"
+import { getGloryHomeStructuredData } from "@/lib/structured-data"
 import "./globals.css"
 import ScrollToTopOnRouteChange from "@/components/scroll-to-top"
 import { Analytics } from "@vercel/analytics/next"
@@ -20,17 +18,30 @@ const raleway = Raleway({ subsets: ["latin"], display: 'swap' })
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   title: {
-    default: "Glory Home - Modern Furniture Design",
+    default: "Glory Home | Luxury Interior Design, Turnkey Finishing & Bespoke Furniture",
     template: "%s | Glory Home",
   },
-  description: "Transforming spaces with cutting-edge furniture design and 3D visualization technology",
+  description:
+    "Glory Home delivers luxury interior design, turnkey finishing, bespoke furniture manufacturing, doors, and 3D visualization for premium residences in Egypt and Gulf markets.",
   keywords: [
-    'glory home', 'furniture', 'interior design', '3D visualization', 'modern furniture',
-    'home decor', 'custom furniture', 'Egypt furniture', 'architecture', 'visualization'
+    'glory home',
+    'luxury interior design egypt',
+    'turnkey finishing egypt',
+    'bespoke furniture manufacturing',
+    'modern classic interior design',
+    'luxury doors and woodworks',
+    'new cairo interior design',
+    'sheikh zayed villa design',
+    'riyadh interior design',
+    'dubai luxury finishing',
+    'sustainable design',
+    'smart home interiors',
+    '3D visualization',
   ],
   openGraph: {
-    title: "Glory Home - Modern Furniture Design",
-    description: "Transforming spaces with cutting-edge furniture design and 3D visualization technology",
+    title: "Glory Home | Luxury Interior Design, Turnkey Finishing & Bespoke Furniture",
+    description:
+      "Luxury interior design, turnkey finishing, doors, and bespoke furniture manufacturing for premium residences in Egypt and Gulf markets.",
     url: '/',
     siteName: 'Glory Home',
     images: [
@@ -41,8 +52,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Glory Home - Modern Furniture Design",
-    description: "Transforming spaces with cutting-edge furniture design and 3D visualization technology",
+    title: "Glory Home | Luxury Interior Design, Turnkey Finishing & Bespoke Furniture",
+    description:
+      "Luxury interior design, turnkey finishing, doors, and bespoke furniture manufacturing for premium residences in Egypt and Gulf markets.",
     images: ['/logo.webp'],
   },
   alternates: {
@@ -72,9 +84,9 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  // const supabase = createServerComponentClient({ cookies: () => cookies() })
-  // const { data: { session } } = await supabase.auth.getSession()
   const session = null;
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.gloryhome-eg.com").replace(/\/$/, "");
+  const structuredData = getGloryHomeStructuredData(siteUrl);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -82,43 +94,11 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              "name": "Glory Home",
-              "description": "Transforming spaces with cutting-edge furniture design and 3D visualization technology",
-              "url": process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-              "logo": `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/logo.webp`,
-              "sameAs": [],
-              "contactPoint": {
-                "@type": "ContactPoint",
-                "contactType": "Customer Service"
-              }
-            })
+            __html: JSON.stringify(structuredData)
           }}
         />
         <Analytics />
         <SpeedInsights />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              "name": "Glory Home",
-              "url": process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-              "inLanguage": "en",
-              "publisher": {
-                "@type": "Organization",
-                "name": "Glory Home",
-                "logo": {
-                  "@type": "ImageObject",
-                  "url": `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/logo.webp`
-                }
-              }
-            })
-          }}
-        />
       </head>
       <body className={raleway.className} suppressHydrationWarning={true}>
         {/* First-visit fast loader: shows once per session to improve perceived FCP */}

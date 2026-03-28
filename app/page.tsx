@@ -5,15 +5,25 @@ import dynamic from 'next/dynamic';
 import { PrefetchCategories } from "@/components/prefetch-categories";
 
 export const metadata: Metadata = {
-  title: "Glory Home - Modern Furniture Design & 3D Visualization",
-  description: "Discover cutting-edge furniture design with 3D visualization technology. Transform your space with Glory Home's modern furniture collections, custom designs, and expert interior solutions.",
+  title: "Luxury Interior Design, Turnkey Finishing & Bespoke Furniture",
+  description:
+    "Discover Glory Home's luxury interior design, turnkey finishing, bespoke furniture manufacturing, doors, and 3D visualization services for premium residences in Egypt and Gulf markets.",
   keywords: [
-    'modern furniture', 'interior design', '3D visualization', 'custom furniture',
-    'home decor', 'furniture Egypt', 'contemporary design', 'space transformation'
+    'luxury interior design',
+    'turnkey finishing',
+    'bespoke furniture',
+    'luxury doors',
+    '3D visualization',
+    'modern classic interior design',
+    'new cairo villa design',
+    'sheikh zayed interior design',
+    'riyadh luxury interior design',
+    'dubai bespoke furniture',
   ],
   openGraph: {
-    title: "Glory Home - Modern Furniture Design & 3D Visualization",
-    description: "Discover cutting-edge furniture design with 3D visualization technology. Transform your space with Glory Home's modern furniture collections.",
+    title: "Glory Home | Luxury Interior Design, Turnkey Finishing & Bespoke Furniture",
+    description:
+      "Luxury interior design, turnkey finishing, doors, and bespoke furniture manufacturing for premium residences in Egypt and Gulf markets.",
     images: [{ url: '/2-7fb9c07a.webp', width: 1200, height: 630, alt: 'Glory Home Furniture Showcase' }],
   },
 }
