@@ -59,7 +59,7 @@ export function HeroSection() {
   const arrowTransformClass = isRTL ? "group-hover:-translate-x-1 mr-2" : "group-hover:translate-x-1 ml-2"
 
   return (
-    <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
+    <section ref={targetRef} className="relative h-screen w-full flex items-center justify-center overflow-hidden">
       {/* Background Video */}
       <div className="absolute inset-0 z-0">
         {/* High-priority poster image to be the discoverable LCP element */}

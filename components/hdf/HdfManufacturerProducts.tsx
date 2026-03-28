@@ -53,6 +53,7 @@ export function HdfManufacturerProducts({ country, manufacturer, products }: Hdf
                     src={manufacturer.banner_image}
                     alt={manufacturer.name}
                     fill
+                    sizes="100vw"
                     className="object-cover"
                     priority
                   />

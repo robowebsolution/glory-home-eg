@@ -21,7 +21,13 @@ export function VideoCard({ video, onEdit, onDelete }: VideoCardProps) {
     <Card className="flex flex-col overflow-hidden transition-shadow hover:shadow-lg">
       <CardContent className="p-0">
         <div className="relative aspect-video bg-muted">
-          <Image src={cover} alt={title} fill className="object-cover" />
+          <Image
+            src={cover}
+            alt={title}
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover"
+          />
           <div className="absolute inset-0 bg-black/30" />
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">

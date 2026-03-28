@@ -76,6 +76,7 @@ export function HdfManufacturerShowcase({ country, manufacturers }: HdfManufactu
                                 src={manufacturer.logo_url}
                                 alt={manufacturer.name}
                                 fill
+                                sizes="40px"
                                 className="object-contain"
                               />
                             </div>

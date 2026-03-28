@@ -182,6 +182,7 @@ export function FeaturedProducts() {
                         src={product.main_image || "/placeholder.svg"}
                         alt={language === "ar" && product.name_ar ? product.name_ar : product.name}
                         fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         className="object-cover"
                         loading="lazy"
                         quality={85}

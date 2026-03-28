@@ -38,6 +38,7 @@ export const AboutCeo = () => {
                 src="/merna.webp"
                 alt={texts.alt}
                 fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover transform hover:scale-105 transition-transform duration-500 ease-in-out"
                 
               />
