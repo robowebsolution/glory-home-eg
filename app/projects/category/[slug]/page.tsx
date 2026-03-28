@@ -4,6 +4,7 @@ import CategoryClient from "@/components/projects/CategoryClient"
 import { notFound } from "next/navigation"
 import { headers } from "next/headers"
 import type { Metadata } from 'next'
+import { getRequestSiteUrl } from "@/lib/site-url"
 
 function slugify(input: string) {
   return input
@@ -16,12 +17,7 @@ function slugify(input: string) {
 
 async function getBaseUrl() {
   const h = await headers()
-  const envBase = process.env.NEXT_PUBLIC_SITE_URL
-  if (envBase) return envBase.replace(/\/$/, "")
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000"
-  const protoHeader = h.get("x-forwarded-proto")
-  const proto = protoHeader ?? (host.includes("localhost") ? "http" : "https")
-  return `${proto}://${host}`
+  return getRequestSiteUrl(h)
 }
 
 async function getData(slug: string) {

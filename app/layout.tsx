@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/lib/language-context"
 import { Toaster } from "sonner"
 import { Toaster as ShadToaster } from "@/components/ui/toaster"
 import { getGloryHomeStructuredData } from "@/lib/structured-data"
+import { getSiteUrl } from "@/lib/site-url"
 import "./globals.css"
 import ScrollToTopOnRouteChange from "@/components/scroll-to-top"
 import { Analytics } from "@vercel/analytics/next"
@@ -16,7 +17,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 const raleway = Raleway({ subsets: ["latin"], display: 'swap' })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "Glory Home | Luxury Interior Design, Turnkey Finishing & Bespoke Furniture",
     template: "%s | Glory Home",
@@ -85,7 +86,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }) {
   const session = null;
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.gloryhome-eg.com").replace(/\/$/, "");
+  const siteUrl = getSiteUrl();
   const structuredData = getGloryHomeStructuredData(siteUrl);
 
   return (
